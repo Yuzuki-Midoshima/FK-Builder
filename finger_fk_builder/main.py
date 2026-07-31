@@ -1,4 +1,4 @@
-"""Maya entry point for Finger-FK-Builder."""
+"""Maya entry point for Finger FK Builder."""
 
 from __future__ import annotations
 

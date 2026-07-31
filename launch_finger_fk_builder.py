@@ -17,13 +17,13 @@ def launch():
     module_names = [
         name
         for name in sys.modules
-        if name == "FingerFKBuilder"
-        or name.startswith("FingerFKBuilder.")
+        if name == "finger_fk_builder"
+        or name.startswith("finger_fk_builder.")
     ]
     for name in sorted(module_names, reverse=True):
         del sys.modules[name]
 
-    from FingerFKBuilder.main import show
+    from finger_fk_builder.main import show
 
     return show()
 

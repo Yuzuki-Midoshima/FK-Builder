@@ -1,4 +1,4 @@
-"""PySide6 user interface for Finger-FK-Builder."""
+"""PySide6 user interface for Finger FK Builder."""
 
 from __future__ import annotations
 

@@ -51,7 +51,7 @@ UIを開いたら、ルートとなるFinger Jointを選択してBuildを実行�
 
 ```text
 Finger-FK-Builder/
-├── FingerFKBuilder/
+├── finger_fk_builder/
 │   ├── builder.py
 │   ├── controller.py
 │   ├── hierarchy.py

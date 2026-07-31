@@ -1,4 +1,4 @@
-"""Finger-FK-Builder public package API."""
+"""Finger FK Builder public package API."""
 
 from .builder import BuildResult, FingerFKBuilder
 
