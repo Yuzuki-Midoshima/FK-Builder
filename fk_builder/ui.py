@@ -1,4 +1,4 @@
-"""PySide6 user interface for Finger FK Builder."""
+"""PySide6 user interface for FK Builder."""
 
 from __future__ import annotations
 
@@ -6,8 +6,8 @@ from typing import Any
 
 from PySide6 import QtCore, QtWidgets
 
-from .builder import FingerFKBuilder
-from .utils import FingerFKError, selected_joint, selected_transform
+from .builder import FKBuilder
+from .utils import FKBuilderError, selected_joint, selected_transform
 
 
 class CollapsibleSection(QtWidgets.QWidget):
@@ -48,10 +48,10 @@ class CollapsibleSection(QtWidgets.QWidget):
         self.content.setVisible(expanded)
 
 
-class FingerFKBuilderWindow(QtWidgets.QDialog):
+class FKBuilderWindow(QtWidgets.QDialog):
     """Minimal portfolio UI; all scene operations are delegated."""
 
-    WINDOW_TITLE = "Finger-FK-Builder"
+    WINDOW_TITLE = "FK-Builder"
     COLOR_OPTIONS = (
         ("No Color", None),
         ("Red", 13),
@@ -67,7 +67,7 @@ class FingerFKBuilderWindow(QtWidgets.QDialog):
         ("Dark Red", 4),
         ("White", 16),
     )
-    DEFAULT_FINGER_COLORS = {
+    DEFAULT_JOINT_COLORS = {
         "thumb": 13,
         "index": 6,
         "middle": 17,
@@ -97,10 +97,10 @@ class FingerFKBuilderWindow(QtWidgets.QDialog):
         cmds: Any | None = None,
     ) -> None:
         super().__init__(parent)
-        self.builder = FingerFKBuilder(cmds=cmds)
+        self.builder = FKBuilder(cmds=cmds)
         self.cmds = self.builder.cmds
         self.setWindowTitle(self.WINDOW_TITLE)
-        self.setObjectName("FingerFKBuilderWindow")
+        self.setObjectName("FKBuilderWindow")
         self.setMinimumWidth(380)
         self.setWindowFlag(QtCore.Qt.WindowContextHelpButtonHint, False)
         self._create_widgets()
@@ -149,16 +149,16 @@ class FingerFKBuilderWindow(QtWidgets.QDialog):
         self.color_section = CollapsibleSection("Controller Color")
         self.color_combos: dict[str, QtWidgets.QComboBox] = {}
         color_form = QtWidgets.QFormLayout()
-        for finger in ("thumb", "index", "middle", "ring", "pinky"):
+        for part in ("thumb", "index", "middle", "ring", "pinky"):
             combo = QtWidgets.QComboBox()
             for label, color_index in self.COLOR_OPTIONS:
                 combo.addItem(label, color_index)
             default_index = combo.findData(
-                self.DEFAULT_FINGER_COLORS[finger]
+                self.DEFAULT_JOINT_COLORS[part]
             )
             combo.setCurrentIndex(default_index)
-            self.color_combos[finger] = combo
-            color_form.addRow(finger.title(), combo)
+            self.color_combos[part] = combo
+            color_form.addRow(part.title(), combo)
 
         self.cool_set_button = QtWidgets.QPushButton("COOL SET")
         self.warm_set_button = QtWidgets.QPushButton("WARM SET")
@@ -272,7 +272,7 @@ class FingerFKBuilderWindow(QtWidgets.QDialog):
         try:
             root = selected_joint(self.cmds)
             joints = self.builder.inspect(root)
-        except (FingerFKError, RuntimeError) as exc:
+        except (FKBuilderError, RuntimeError) as exc:
             self.log("Error: {0}".format(exc), clear=True)
             return
         self.root_field.setText(root)
@@ -282,7 +282,7 @@ class FingerFKBuilderWindow(QtWidgets.QDialog):
     def set_visibility_controller(self) -> None:
         try:
             controller = selected_transform(self.cmds)
-        except FingerFKError as exc:
+        except FKBuilderError as exc:
             self.log("Error: {0}".format(exc), clear=True)
             return
         self.visibility_field.setText(controller)
@@ -309,7 +309,7 @@ class FingerFKBuilderWindow(QtWidgets.QDialog):
                 visibility_controller=(
                     self.visibility_field.text().strip() or None
                 ),
-                finger_colors=self.selected_finger_colors(),
+                joint_colors=self.selected_joint_colors(),
                 include_end_joint=self.include_end_radio.isChecked(),
             )
         except Exception as exc:
@@ -331,22 +331,22 @@ class FingerFKBuilderWindow(QtWidgets.QDialog):
             if checkbox.isChecked()
         )
 
-    def selected_finger_colors(self) -> dict[str, int | None]:
-        """Return Maya color indices selected for each finger."""
+    def selected_joint_colors(self) -> dict[str, int | None]:
+        """Return Maya color indices selected for each joint group."""
         return {
-            finger: combo.currentData()
-            for finger, combo in self.color_combos.items()
+            part: combo.currentData()
+            for part, combo in self.color_combos.items()
         }
 
     def apply_color_preset(self, preset_name: str) -> None:
-        """Apply a default, warm, or cool palette to all fingers."""
+        """Apply a default, warm, or cool palette to all joint groups."""
         preset = (
-            self.DEFAULT_FINGER_COLORS
+            self.DEFAULT_JOINT_COLORS
             if preset_name == "default"
             else self.COLOR_PRESETS[preset_name]
         )
-        for finger, color_index in preset.items():
-            combo = self.color_combos[finger]
+        for part, color_index in preset.items():
+            combo = self.color_combos[part]
             combo.blockSignals(True)
             index = combo.findData(color_index)
             if index >= 0:
@@ -364,7 +364,7 @@ class FingerFKBuilderWindow(QtWidgets.QDialog):
     @QtCore.Slot()
     def sync_color_preset_buttons(self) -> None:
         """Highlight only the preset matching the current color choices."""
-        selected = self.selected_finger_colors()
+        selected = self.selected_joint_colors()
         matching_button = None
         if selected == self.COLOR_PRESETS["cool"]:
             matching_button = self.cool_set_button

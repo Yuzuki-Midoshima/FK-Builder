@@ -1,4 +1,4 @@
-"""Standalone Maya launcher for Finger-FK-Builder."""
+"""Standalone Maya launcher for FK Builder."""
 
 from __future__ import annotations
 
@@ -17,13 +17,13 @@ def launch():
     module_names = [
         name
         for name in sys.modules
-        if name == "finger_fk_builder"
-        or name.startswith("finger_fk_builder.")
+        if name == "fk_builder"
+        or name.startswith("fk_builder.")
     ]
     for name in sorted(module_names, reverse=True):
         del sys.modules[name]
 
-    from finger_fk_builder.main import show
+    from fk_builder.main import show
 
     return show()
 

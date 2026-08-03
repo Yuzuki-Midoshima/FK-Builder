@@ -21,7 +21,7 @@ Technical Artist／Rigger職への応募を目的に制作・公開している�
 - Translate、Rotate、Scale、VisibilityのChannel Lock設定
 - Thumb、Index、Middle、Ring、PinkyごとのMaya Color Index設定
 - Cool／Warm Color Preset
-- 任意のSettings Controllerへ`FK_finger` Visibility Attributeを追加
+- 任意のSettings Controllerへ`FK_visibility` Attributeを追加
 - 出力名の重複と既存Nodeとの衝突をBuild前に検証
 - 失敗時にMaya UndoでBuild処理をロールバック
 
@@ -86,7 +86,7 @@ tool_root = (
     Path(cmds.internalVar(userScriptDir=True))
     / "FK-Builder"
 )
-runpy.run_path(str(tool_root / "launch_finger_fk_builder.py"))
+runpy.run_path(str(tool_root / "launch_fk_builder.py"))
 ```
 
 ### 基本操作
@@ -102,7 +102,7 @@ runpy.run_path(str(tool_root / "launch_finger_fk_builder.py"))
 
 ```text
 FK-Builder/
-├── finger_fk_builder/
+├── fk_builder/
 │   ├── __init__.py
 │   ├── builder.py
 │   ├── controller.py
@@ -112,7 +112,7 @@ FK-Builder/
 │   └── utils.py
 ├── tests/
 │   └── test_core.py
-├── launch_finger_fk_builder.py
+├── launch_fk_builder.py
 ├── README.md
 └── .gitignore
 ```
@@ -133,7 +133,7 @@ Controller生成、Constraint、UI、UndoはMaya APIとSceneを必要とする�
 - 出力予定のControllerまたはZero Groupがすでに存在する場合はBuildを中止します。
 - 部位別Colorは、Joint名を記号で分割したTokenに`thumb`、`index`、`middle`、`ring`、`pinky`が含まれる場合に適用されます。
 - Visibility ControlにはTransform Nodeを1つ指定します。
-- Visibility Controlに`FK_finger`Attributeがすでに存在する場合はBuildを中止します。
+- Visibility Controlに`FK_visibility` Attributeがすでに存在する場合はBuildを中止します。
 - Maya依存部分の自動統合テストは現在ありません。
 
 ## License

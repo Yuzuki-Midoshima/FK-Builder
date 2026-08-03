@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 
-class FingerFKError(RuntimeError):
+class FKBuilderError(RuntimeError):
     """An expected validation or build error suitable for display in the UI."""
 
 
@@ -15,7 +15,7 @@ def maya_cmds() -> Any:
         from maya import cmds
     except ImportError as exc:
         raise RuntimeError(
-            "Finger-FK-Builder must be run inside Maya."
+            "FK-Builder must be run inside Maya."
         ) from exc
     return cmds
 
@@ -29,7 +29,7 @@ def controller_name(joint: str) -> str:
     """Convert a joint name to its controller name."""
     name = short_name(joint)
     if not name.endswith("_jnt"):
-        raise FingerFKError(
+        raise FKBuilderError(
             "Joint name must end with '_jnt': {0}".format(name)
         )
     return name[:-4] + "_anim"
@@ -48,7 +48,7 @@ def selected_joint(cmds: Any) -> str:
         type="joint",
     ) or []
     if not selected:
-        raise FingerFKError("Select a root joint.")
+        raise FKBuilderError("Select a root joint.")
     return selected[0]
 
 
@@ -56,16 +56,16 @@ def selected_transform(cmds: Any) -> str:
     """Return one selected transform for use as a settings controller."""
     selected = cmds.ls(selection=True, long=True, type="transform") or []
     if len(selected) != 1:
-        raise FingerFKError("Select exactly one settings controller.")
+        raise FKBuilderError("Select exactly one settings controller.")
     return selected[0]
 
 
 def joint_hierarchy(cmds: Any, root_joint: str) -> list[str]:
     """Return root and all joint descendants in parent-before-child order."""
     if not root_joint or not cmds.objExists(root_joint):
-        raise FingerFKError("Root Joint does not exist.")
+        raise FKBuilderError("Root Joint does not exist.")
     if cmds.nodeType(root_joint) != "joint":
-        raise FingerFKError("Root Joint must be a joint.")
+        raise FKBuilderError("Root Joint must be a joint.")
 
     root = (cmds.ls(root_joint, long=True) or [root_joint])[0]
     descendants = cmds.listRelatives(

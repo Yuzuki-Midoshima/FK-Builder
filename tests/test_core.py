@@ -1,8 +1,8 @@
 import unittest
 
-from finger_fk_builder.builder import FingerFKBuilder
-from finger_fk_builder.utils import (
-    FingerFKError,
+from fk_builder.builder import FKBuilder
+from fk_builder.utils import (
+    FKBuilderError,
     controller_name,
     joint_hierarchy,
     selected_joint,
@@ -22,7 +22,7 @@ class NamingTests(unittest.TestCase):
         self.assertEqual(zero_name(joint), "character:index1_zero")
 
     def test_controller_name_requires_joint_suffix(self):
-        with self.assertRaises(FingerFKError):
+        with self.assertRaises(FKBuilderError):
             controller_name("index1")
 
 
@@ -45,11 +45,11 @@ class SelectionTests(unittest.TestCase):
         self.assertEqual(selected_joint(cmds), "|hand|index1_jnt")
 
     def test_selected_joint_requires_selection(self):
-        with self.assertRaises(FingerFKError):
+        with self.assertRaises(FKBuilderError):
             selected_joint(SelectionCmds())
 
     def test_selected_transform_requires_exactly_one(self):
-        with self.assertRaises(FingerFKError):
+        with self.assertRaises(FKBuilderError):
             selected_transform(SelectionCmds(transforms=["a", "b"]))
 
 
@@ -76,16 +76,16 @@ class HierarchyTests(unittest.TestCase):
 
 
 class ColorResolutionTests(unittest.TestCase):
-    def test_color_is_resolved_from_delimited_finger_name(self):
+    def test_color_is_resolved_from_delimited_joint_name(self):
         colors = {"index": 6, "ring": 14}
         self.assertEqual(
-            FingerFKBuilder._color_for_joint("|hand|L_index_01_jnt", colors),
+            FKBuilder._color_for_joint("|hand|L_index_01_jnt", colors),
             6,
         )
 
     def test_partial_token_does_not_match(self):
         self.assertIsNone(
-            FingerFKBuilder._color_for_joint(
+            FKBuilder._color_for_joint(
                 "|hand|L_indexHelper_jnt",
                 {"index": 6},
             )
