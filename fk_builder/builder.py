@@ -1,4 +1,4 @@
-"""UI-independent orchestration for building finger FK controls."""
+"""UI-independent orchestration for building FK controls."""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ from typing import Any, Callable
 from .controller import CubeControllerFactory
 from .hierarchy import create_fk_hierarchy
 from .utils import (
-    FingerFKError,
+    FKBuilderError,
     controller_name,
     joint_hierarchy,
     maya_cmds,
@@ -30,7 +30,7 @@ class BuildResult:
     constraints: tuple[str, ...]
 
 
-class FingerFKBuilder:
+class FKBuilder:
     """Build cube FK controls for every joint below a selected root."""
 
     def __init__(
@@ -62,7 +62,7 @@ class FingerFKBuilder:
                 )
             ]
         if not joints:
-            raise FingerFKError(
+            raise FKBuilderError(
                 "No joints remain when End Joint is excluded."
             )
         self._validate_names(joints)
@@ -75,13 +75,13 @@ class FingerFKBuilder:
         log: LogCallback | None = None,
         lock_channels: Iterable[str] | None = None,
         visibility_controller: str | None = None,
-        finger_colors: dict[str, int | None] | None = None,
+        joint_colors: dict[str, int | None] | None = None,
         include_end_joint: bool = True,
     ) -> BuildResult:
         """Build the complete FK setup as one Maya undo operation."""
         emit = log or (lambda _message: None)
         if controller_size <= 0.0:
-            raise FingerFKError("Controller Size must be greater than zero.")
+            raise FKBuilderError("Controller Size must be greater than zero.")
 
         emit("Searching joints...")
         joints = self.inspect(root_joint, include_end_joint)
@@ -97,7 +97,7 @@ class FingerFKBuilder:
         try:
             self.cmds.undoInfo(
                 openChunk=True,
-                chunkName="Finger-FK-Builder",
+                chunkName="FK-Builder",
             )
             chunk_open = True
 
@@ -106,7 +106,7 @@ class FingerFKBuilder:
                 controller = self.controller_factory.create(
                     controller_name(joint),
                     controller_size,
-                    self._color_for_joint(joint, finger_colors),
+                    self._color_for_joint(joint, joint_colors),
                 )
                 zero = self.cmds.group(empty=True, name=zero_name(joint))
                 self.cmds.parent(controller, zero)
@@ -178,12 +178,12 @@ class FingerFKBuilder:
             name for name in output_names if output_names.count(name) > 1
         }
         if duplicates:
-            raise FingerFKError(
+            raise FKBuilderError(
                 "Duplicate output name: {0}".format(sorted(duplicates)[0])
             )
         existing = [name for name in output_names if self.cmds.objExists(name)]
         if existing:
-            raise FingerFKError(
+            raise FKBuilderError(
                 "Controller or zero group already exists: {0}".format(
                     existing[0]
                 )
@@ -209,7 +209,7 @@ class FingerFKBuilder:
         }
         for attribute in attributes:
             if attribute not in allowed:
-                raise FingerFKError(
+                raise FKBuilderError(
                     "Unsupported lock channel: {0}".format(attribute)
                 )
             self.cmds.setAttr(
@@ -223,20 +223,20 @@ class FingerFKBuilder:
         self,
         controller: str | None,
     ) -> str | None:
-        """Validate the optional transform which receives FK-finger."""
+        """Validate the optional transform which receives FK visibility."""
         if not controller:
             return None
         if not self.cmds.objExists(controller):
-            raise FingerFKError("Visibility Controller does not exist.")
+            raise FKBuilderError("Visibility Controller does not exist.")
         if self.cmds.nodeType(controller) != "transform":
-            raise FingerFKError(
+            raise FKBuilderError(
                 "Visibility Controller must be a transform."
             )
         controller = (self.cmds.ls(controller, long=True) or [controller])[0]
-        plug = "{0}.FK_finger".format(controller)
+        plug = "{0}.FK_visibility".format(controller)
         if self.cmds.objExists(plug):
-            raise FingerFKError(
-                "FK-finger already exists on Visibility Controller."
+            raise FKBuilderError(
+                "FK visibility already exists on Visibility Controller."
             )
         return controller
 
@@ -248,15 +248,15 @@ class FingerFKBuilder:
         """Add an OFF/ON channel and drive the complete FK hierarchy."""
         self.cmds.addAttr(
             settings_controller,
-            longName="FK_finger",
-            niceName="FK-finger",
+            longName="FK_visibility",
+            niceName="FK Visibility",
             attributeType="enum",
             enumName="OFF:ON",
             defaultValue=1,
             keyable=True,
         )
         self.cmds.connectAttr(
-            "{0}.FK_finger".format(settings_controller),
+            "{0}.FK_visibility".format(settings_controller),
             "{0}.visibility".format(root_zero),
             force=True,
         )
@@ -264,14 +264,14 @@ class FingerFKBuilder:
     @staticmethod
     def _color_for_joint(
         joint: str,
-        finger_colors: dict[str, int | None] | None,
+        joint_colors: dict[str, int | None] | None,
     ) -> int | None:
-        """Resolve a finger color from underscore-delimited joint names."""
-        if not finger_colors:
+        """Resolve a joint color from underscore-delimited joint names."""
+        if not joint_colors:
             return None
         leaf_name = joint.rsplit("|", 1)[-1].rsplit(":", 1)[-1].lower()
         tokens = set(filter(None, re.split(r"[^a-z]+", leaf_name)))
-        for finger in ("thumb", "index", "middle", "ring", "pinky"):
-            if finger in tokens:
-                return finger_colors.get(finger)
+        for part in ("thumb", "index", "middle", "ring", "pinky"):
+            if part in tokens:
+                return joint_colors.get(part)
         return None

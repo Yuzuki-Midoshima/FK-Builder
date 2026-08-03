@@ -1,8 +1,25 @@
-__pycache__/
-*.py[cod]
+# Python
+**/__pycache__/
+*.pyc
+*.pyo
 .pytest_cache/
-.idea/
-.vscode/
+
+# Logs and temporary files
+*.log
+*.tmp
+*.bak
 *.swp
+
+# Editors
+.vscode/
+.idea/
+
+# Maya generated files
+**/autosave/
+**/incrementalSave/
+*.ma~
+*.mb~
+
+# Operating systems
 Thumbs.db
 .DS_Store
