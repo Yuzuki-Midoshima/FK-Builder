@@ -1,4 +1,4 @@
-# Finger FK Builder
+# FK Builder
 
 ## Overview
 
@@ -55,12 +55,12 @@ Build処理はMaya Undo Chunkで囲み、途中で例外が発生した場合は
 
 ## Installation
 
-`Finger-FK-Builder`フォルダをMayaのユーザースクリプトフォルダ直下へ配置します。
+`FK-Builder`フォルダをMayaのユーザースクリプトフォルダ直下へ配置します。
 
 ```text
 <Maya userAppDir>/
 └── scripts/
-    └── Finger-FK-Builder/
+    └── FK-Builder/
 ```
 
 Maya上のユーザースクリプトフォルダは次のコードで確認できます。
@@ -84,7 +84,7 @@ from maya import cmds
 
 tool_root = (
     Path(cmds.internalVar(userScriptDir=True))
-    / "Finger-FK-Builder"
+    / "FK-Builder"
 )
 runpy.run_path(str(tool_root / "launch_finger_fk_builder.py"))
 ```
@@ -101,7 +101,7 @@ runpy.run_path(str(tool_root / "launch_finger_fk_builder.py"))
 ## Project Structure
 
 ```text
-Finger-FK-Builder/
+FK-Builder/
 ├── finger_fk_builder/
 │   ├── __init__.py
 │   ├── builder.py
@@ -119,7 +119,7 @@ Finger-FK-Builder/
 
 ## Testing
 
-命名、選択検証、Joint階層順、Finger Color解決はMayaなしでテストできます。
+命名、選択検証、Joint階層順、部位別Color解決はMayaなしでテストできます。
 
 ```powershell
 python -m unittest discover -s tests -p "test_*.py" -v
@@ -131,7 +131,7 @@ Controller生成、Constraint、UI、UndoはMaya APIとSceneを必要とする�
 
 - 対象Joint名は`_jnt`で終わる必要があります。
 - 出力予定のControllerまたはZero Groupがすでに存在する場合はBuildを中止します。
-- Finger Colorは、Joint名を記号で分割したTokenに`thumb`、`index`、`middle`、`ring`、`pinky`が含まれる場合に適用されます。
+- 部位別Colorは、Joint名を記号で分割したTokenに`thumb`、`index`、`middle`、`ring`、`pinky`が含まれる場合に適用されます。
 - Visibility ControlにはTransform Nodeを1つ指定します。
 - Visibility Controlに`FK_finger`Attributeがすでに存在する場合はBuildを中止します。
 - Maya依存部分の自動統合テストは現在ありません。
