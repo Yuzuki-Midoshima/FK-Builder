@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  python-checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Compile Python sources
+        run: python -m compileall -q -f fk_builder tests launch_fk_builder.py
+
+      - name: Run Maya-independent unit tests
+        run: python -m unittest discover -s tests -p "test_*.py" -v
+
+      - name: Verify Maya-independent imports
+        run: |
+          python - <<'PY'
+          import fk_builder
+          from fk_builder.builder import BuildResult, FKBuilder
+          from fk_builder.controller import CubeControllerFactory
+          from fk_builder.shape_library import load_mox_shapes
+          from fk_builder.utils import FKBuilderError
+
+          assert fk_builder.FKBuilder is FKBuilder
+          assert BuildResult and CubeControllerFactory and FKBuilderError
+          assert load_mox_shapes()
+          PY

@@ -1,25 +1,44 @@
-# Python
-**/__pycache__/
-*.pyc
-*.pyo
+# Python bytecode and caches
+__pycache__/
+*.py[cod]
+*$py.class
 .pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Test and coverage output
+.coverage
+.coverage.*
+htmlcov/
+
+# Virtual environments and packaging output
+.venv/
+venv/
+build/
+dist/
+*.egg-info/
+
+# Editors and local tools
+.vscode/
+.idea/
+*.code-workspace
+*.swp
 
 # Logs and temporary files
 *.log
 *.tmp
 *.bak
-*.swp
 
-# Editors
-.vscode/
-.idea/
-
-# Maya generated files
-**/autosave/
-**/incrementalSave/
+# Maya-generated backup, autosave, and preview data
+autosave/
+incrementalSave/
+mayaSwatches/
+*.autosave
 *.ma~
 *.mb~
+*.swatches
 
-# Operating systems
+# Operating-system metadata
 Thumbs.db
+Desktop.ini
 .DS_Store

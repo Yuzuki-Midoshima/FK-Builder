@@ -1,141 +1,130 @@
-# FK Builder
+# FK Builder for Maya
+
+Autodesk Maya 2026で、選択したJoint階層から汎用FK Controller Rigを構築するRigger / Technical Artist向けツールです。Controller生成、Zero Group、階層化、Constraint、Channel Lock、Color、Shape、Visibilityを一貫した手順で設定します。
 
 ## Overview
 
-Autodesk Maya 2026で、選択した指のJoint階層からFK Controller Rigを構築するツールです。Cube型NURBS Controller、Zero Group、親子階層、Orient Constraintをまとめて生成します。
+JointごとのController作成と命名、位置合わせ、階層化、Constraint設定を自動化し、手作業による設定漏れを減らします。Build前の検証、Build後のJoint行列検証、失敗時のUndo rollbackにより、既存のbind poseを保護します。
 
-Technical Artist／Rigger職への応募を目的に制作・公開しているポートフォリオ作品です。
+## Demo
 
-## Problem
-
-指のJointごとにController作成、位置合わせ、階層化、Constraint、Channel Lockを繰り返す作業は、設定漏れや命名の不統一が起きやすくなります。本ツールは選択したRoot Joint以下を検証し、一貫した命名と階層でFK Rigを構築します。
+デモ画像・動画は[`docs/media/`](docs/media/)へ追加できます。ポートフォリオ素材をMaya packageから分離して更新できる構成です。
 
 ## Features
 
-- Root Joint以下のJoint階層を親から子の順に取得
-- Joint名から`*_anim` Controllerと`*_zero` Group名を生成
-- CVへSizeを反映したCube型NURBS Controllerを生成
-- 元Jointへ位置・回転を合わせてFK親子階層を構築
-- ControllerからJointへOrient Constraintを作成
-- End Joint ControllerのInclude／Exclude
-- Translate、Rotate、Scale、VisibilityのChannel Lock設定
-- Thumb、Index、Middle、Ring、PinkyごとのMaya Color Index設定
-- Cool／Warm Color Preset
-- 任意のSettings Controllerへ`FK_visibility` Attributeを追加
-- 出力名の重複と既存Nodeとの衝突をBuild前に検証
-- 失敗時にMaya UndoでBuild処理をロールバック
-
-## Architecture
-
-UI、Build Orchestration、Controller生成、階層処理、Mayaアクセス補助を分離しています。
-
-```text
-PySide6 UI (ui.py)
-       ↓
-Build Orchestration (builder.py)
-       ├── Controller Factory (controller.py)
-       ├── FK Hierarchy (hierarchy.py)
-       └── Validation / Maya Helpers (utils.py)
-```
-
-- `ui.py`：入力、オプション、ログ表示
-- `builder.py`：検証からController、Constraint生成までのBuild手順
-- `controller.py`：Cube Curveの生成とColor設定
-- `hierarchy.py`：Joint親子関係に対応したFK階層の構築
-- `utils.py`：選択、Joint取得、命名、Maya遅延import
-- `main.py`：Maya Main Windowとの統合とWindow管理
-
-Build処理はMaya Undo Chunkで囲み、途中で例外が発生した場合はChunkを閉じてUndoします。
-
-## Requirements
-
-- Autodesk Maya 2026
-- Python 3.11
-- PySide6（Maya同梱版）
+- Root Joint以下を親から子の順で検出
+- 対応するJoint suffixから`*_anim` Controllerと`*_zero` Groupを生成
+- 標準Cubeまたは同梱MOX NURBS curve shapeを選択
+- Controller SizeとCVへのPosition / Rotation Offset適用
+- 全体、名前ルール、分岐単位でのColor・Offset・Channel Lock設定
+- End JointのInclude / Exclude
+- ControllerとZero Groupの重複名検証
+- Joint階層に対応する再帰的FK Controller階層
+- Parent ConstraintとScale Constraintの作成
+- 任意のSettings ControllerへのVisibility attribute追加
+- Build前後のJoint world matrix比較
+- 例外発生時の単一Undo chunk rollback
 
 ## Installation
 
-`FK-Builder`フォルダをMayaのユーザースクリプトフォルダ直下へ配置します。
+1. リポジトリをMayaからアクセス可能な場所へcloneまたはdownloadします。
+2. Maya Script EditorのPythonタブからlauncherを実行します。
+
+Mayaユーザースクリプトフォルダへ配置する例:
 
 ```text
-<Maya userAppDir>/
-└── scripts/
-    └── FK-Builder/
-```
-
-Maya上のユーザースクリプトフォルダは次のコードで確認できます。
-
-```python
-from maya import cmds
-
-print(cmds.internalVar(userScriptDir=True))
+<Maya user scripts>/FK-Builder/
 ```
 
 ## Usage
-
-### 起動
-
-Maya Script EditorのPythonタブで次を実行します。Shelfへ登録する場合も同じコードを使用できます。
 
 ```python
 from pathlib import Path
 import runpy
 from maya import cmds
 
-tool_root = (
-    Path(cmds.internalVar(userScriptDir=True))
-    / "FK-Builder"
-)
+tool_root = Path(cmds.internalVar(userScriptDir=True)) / "FK-Builder"
 runpy.run_path(str(tool_root / "launch_fk_builder.py"))
 ```
 
-### 基本操作
+1. 対象階層のRoot Jointを選択して`SET`を押します。
+2. Controller SizeとEnd Joint設定を確認します。
+3. Shape、Color、Offset、Channel Lockの適用方法を選択します。
+4. 必要ならSettings ControllerとVisibility attributeを設定します。
+5. `BUILD FK`を実行し、Logで結果を確認します。
 
-1. 指階層のRoot Jointを選択して`SET`を押します。
-2. Controller Sizeを設定します。
-3. 必要に応じてChannel Lock、Controller Color、End Jointを設定します。
-4. Visibilityをまとめて制御する場合は、Settings Controllerを選択してVisibility Controlの`SET`を押します。
-5. `BUILD FK`を押します。
-6. Logで検出Joint数と作成結果を確認します。
+## Technical Highlights
+
+- UI、Build orchestration、curve生成、階層処理、Maya helperをmodule単位で分離
+- `maya.cmds`を遅延importし、Builderへcommand moduleを注入可能
+- `BuildResult` frozen dataclassで生成nodeを明示的に返却
+- Maya DAG long pathを使った親子探索とrecursive branch grouping
+- duplicate controller / zero nameをBuild前に検出・回避
+- Curve CVへEuler rotationとtranslationを焼き込み、transformをfreeze
+- 複数componentのNURBS shapeを1つのController transformへ統合
+- Constraint作成後にJoint world matrixを比較し、bind pose変化時はrollback
+- Maya非依存ロジックを標準`unittest`で検証
 
 ## Project Structure
 
 ```text
-FK-Builder/
-├── fk_builder/
-│   ├── __init__.py
-│   ├── builder.py
-│   ├── controller.py
-│   ├── hierarchy.py
-│   ├── main.py
-│   ├── ui.py
-│   └── utils.py
-├── tests/
-│   └── test_core.py
-├── launch_fk_builder.py
-├── README.md
-└── .gitignore
+fk_builder/                    公開Python package
+  builder.py                   検証とFK build orchestration
+  controller.py                NURBS controller factory
+  hierarchy.py                 FK hierarchy構築
+  shape_library.py             同梱shape JSON読込
+  shape_picker.py              PySide6 visual shape picker
+  ui.py                        PySide6 UI
+  main.py                      Maya main window integration
+  utils.py                     命名・選択・Maya helper
+  data/mox_shapes.json         Controller shape data
+tests/                         Maya非依存unit tests
+docs/media/                    Demo素材
+launch_fk_builder.py           Maya launcher
 ```
+
+既存のMaya launcherと`fk_builder` importを維持するため、無理な`src/` layoutへの変更は行っていません。
+
+## Requirements
+
+- Autodesk Maya 2026
+- Python 3.11（Maya 2026同梱）
+- PySide6 / shiboken6（Maya 2026同梱）
+- 外部Python package不要
 
 ## Testing
 
-命名、選択検証、Joint階層順、部位別Color解決はMayaなしでテストできます。
+### Automated Tests
 
-```powershell
+Maya非依存テストは標準ライブラリだけで実行できます。
+
+```bash
 python -m unittest discover -s tests -p "test_*.py" -v
 ```
 
-Controller生成、Constraint、UI、UndoはMaya APIとSceneを必要とするため、Maya 2026上で手動確認します。
+自動テストは命名、選択検証、Joint階層順、Color解決、MOX JSON検証、CV offset計算、Visibility attribute正規化、Shape validation、branch groupingを対象とします。GitHub Actionsでは全Pythonファイルのcompile checkとMaya非依存import checkも実行します。
 
-## Known Limitations
+### Maya Manual Tests
 
-- 対象Joint名は`_jnt`で終わる必要があります。
-- 出力予定のControllerまたはZero Groupがすでに存在する場合はBuildを中止します。
-- 部位別Colorは、Joint名を記号で分割したTokenに`thumb`、`index`、`middle`、`ring`、`pinky`が含まれる場合に適用されます。
-- Visibility ControlにはTransform Nodeを1つ指定します。
-- Visibility Controlに`FK_visibility` Attributeがすでに存在する場合はBuildを中止します。
-- Maya依存部分の自動統合テストは現在ありません。
+- launcherとPySide6 windowの起動・再読み込み
+- Root Joint検出とEnd Joint除外
+- Cube / MOX shapeのcurve生成とvisual picker
+- Color、Offset、Channel Lockの全適用mode
+- Controller / Zero hierarchyと親階層
+- Parent / Scale Constraintとbind pose維持
+- Visibility attributeとroot zero visibility接続
+- duplicate node検出とエラー表示
+- Build途中の失敗時にUndoで完全に戻ること
+- Maya Undo履歴と既存animationへの影響
+
+## Development Workflow
+
+変更は`feature/*`、`fix/*`、`chore/*`ブランチで行い、`main`向けPull Requestを作成します。CI成功とMaya手動確認の後にのみmergeし、`main`を公開可能な安定版として維持します。
+
+## Third-Party Assets
+
+`fk_builder/data/mox_shapes.json`のmetadataは`MoxRigController 2015-07-23`をsourceとして示しています。公開・再配布前に、リポジトリ所有者が元データの利用条件と必要なattributionを確認してください。
 
 ## License
 
-このリポジトリにはライセンスファイルを設定していません。公開後のコード利用条件は、ライセンスを明示するまで著作権者に留保されます。
+ライセンスは現在指定されていません。コードおよび同梱shape dataの利用・再配布条件は、権利確認後に明示してください。

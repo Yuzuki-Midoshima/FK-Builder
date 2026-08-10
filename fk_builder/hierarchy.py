@@ -11,11 +11,11 @@ def create_fk_hierarchy(
     controllers: dict[str, str],
     zero_groups: dict[str, str],
 ) -> None:
-    """Parent each child zero beneath its joint parent's controller."""
+    """Parent each zero below its nearest ancestor joint controller."""
     joint_set = set(joints)
     for joint in joints:
-        parents = cmds.listRelatives(
-            joint, parent=True, type="joint", fullPath=True
-        ) or []
-        if parents and parents[0] in joint_set:
-            cmds.parent(zero_groups[joint], controllers[parents[0]])
+        parent_path = joint.rsplit("|", 1)[0]
+        while parent_path and parent_path not in joint_set:
+            parent_path = parent_path.rsplit("|", 1)[0]
+        if parent_path in joint_set:
+            cmds.parent(zero_groups[joint], controllers[parent_path])

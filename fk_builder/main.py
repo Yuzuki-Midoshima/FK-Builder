@@ -1,4 +1,4 @@
-"""Maya entry point for FK Builder."""
+"""Maya entry point for FK-Builder."""
 
 from __future__ import annotations
 

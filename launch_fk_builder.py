@@ -1,4 +1,4 @@
-"""Standalone Maya launcher for FK Builder."""
+"""Standalone Maya launcher for FK-Builder."""
 
 from __future__ import annotations
 
@@ -12,8 +12,6 @@ def launch():
     if tool_root not in sys.path:
         sys.path.insert(0, tool_root)
 
-    # The tool may previously have been imported from another directory.
-    # Remove that cached package so Python resolves it from this tool root.
     module_names = [
         name
         for name in sys.modules
