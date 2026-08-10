@@ -462,7 +462,7 @@ class FKBuilder:
     def _validate_shape_data(
         shape_data: dict[str, Any] | None,
     ) -> dict[str, Any] | None:
-        """Validate optional bundled MOX curve data."""
+        """Validate optional controller-shape library data."""
         if not shape_data:
             return None
         components = shape_data.get("components") or [shape_data]

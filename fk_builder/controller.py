@@ -7,7 +7,7 @@ from typing import Any
 
 
 class CubeControllerFactory:
-    """Create lightweight default or MOX NURBS curve controllers."""
+    """Create lightweight default or library-based NURBS controllers."""
 
     _POINTS = (
         (-1, -1, -1),
@@ -42,7 +42,7 @@ class CubeControllerFactory:
         position_offset: tuple[float, float, float] = (0.0, 0.0, 0.0),
         rotation_offset: tuple[float, float, float] = (0.0, 0.0, 0.0),
     ) -> str:
-        """Create the default cube or a selected bundled MOX shape."""
+        """Create the default cube or a selected library shape."""
         if size <= 0.0:
             raise ValueError("コントローラーサイズは0より大きくしてください。")
         components = (

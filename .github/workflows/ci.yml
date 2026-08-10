@@ -35,10 +35,11 @@ jobs:
           import fk_builder
           from fk_builder.builder import BuildResult, FKBuilder
           from fk_builder.controller import CubeControllerFactory
-          from fk_builder.shape_library import load_mox_shapes
+          from fk_builder.shape_library import load_shape_libraries
           from fk_builder.utils import FKBuilderError
 
           assert fk_builder.FKBuilder is FKBuilder
           assert BuildResult and CubeControllerFactory and FKBuilderError
-          assert load_mox_shapes()
+          shapes = load_shape_libraries(include_external=False)
+          assert {"basic_circle", "basic_square", "basic_diamond", "basic_cross"} == set(shapes)
           PY

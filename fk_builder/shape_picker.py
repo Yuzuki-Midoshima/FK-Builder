@@ -1,4 +1,4 @@
-"""Searchable visual picker for bundled MOX controller shapes."""
+"""Searchable visual picker for controller-shape libraries."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ from PySide6 import QtCore, QtGui, QtWidgets
 
 
 class ShapePickerDialog(QtWidgets.QDialog):
-    """Display shape previews generated directly from MOX CV data."""
+    """Display shape previews generated directly from curve-point data."""
 
     def __init__(
         self,
@@ -16,7 +16,7 @@ class ShapePickerDialog(QtWidgets.QDialog):
         parent: QtWidgets.QWidget | None = None,
     ) -> None:
         super().__init__(parent)
-        self.setWindowTitle("MOX コントローラー形状一覧")
+        self.setWindowTitle("コントローラー形状一覧")
         self.setMinimumSize(560, 420)
         self.selected_shape = ""
         self._shapes = shapes
@@ -60,7 +60,12 @@ class ShapePickerDialog(QtWidgets.QDialog):
                 self._icon(shape), str(shape.get("label", key))
             )
             item.setData(QtCore.Qt.ItemDataRole.UserRole, key)
-            item.setToolTip(str(shape.get("source", key)))
+            item.setToolTip(
+                "{0} / {1}".format(
+                    shape.get("library_name", "Shape Library"),
+                    shape.get("source", key),
+                )
+            )
             self.list.addItem(item)
 
     @staticmethod

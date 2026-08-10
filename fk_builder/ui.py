@@ -7,7 +7,7 @@ from typing import Any
 from PySide6 import QtCore, QtWidgets
 
 from .builder import FKBuilder
-from .shape_library import load_mox_shapes
+from .shape_library import ShapeLibraryError, load_shape_libraries
 from .shape_picker import ShapePickerDialog
 from .utils import FKBuilderError, selected_joint, selected_transform
 
@@ -379,7 +379,14 @@ class FKBuilderWindow(QtWidgets.QDialog):
         super().__init__(parent)
         self.builder = FKBuilder(cmds=cmds)
         self.cmds = self.builder.cmds
-        self._mox_shapes = load_mox_shapes()
+        self._shape_library_warning = ""
+        try:
+            self._available_shapes = load_shape_libraries()
+        except ShapeLibraryError as exc:
+            self._available_shapes = load_shape_libraries(
+                include_external=False
+            )
+            self._shape_library_warning = str(exc)
         self._selected_shape_key = ""
         self._shape_picker: ShapePickerDialog | None = None
         self.setWindowTitle(self.WINDOW_TITLE)
@@ -390,6 +397,12 @@ class FKBuilderWindow(QtWidgets.QDialog):
         self._create_layout()
         self._connect_signals()
         self.log("準備完了。", clear=True)
+        if self._shape_library_warning:
+            self.log(
+                "外部Shape Library警告: {0}".format(
+                    self._shape_library_warning
+                )
+            )
 
     def _create_widgets(self) -> None:
         self.root_field = QtWidgets.QLineEdit()
@@ -618,13 +631,13 @@ class FKBuilderWindow(QtWidgets.QDialog):
 
     @QtCore.Slot()
     def open_shape_picker(self) -> None:
-        """Open a non-modal MOX shape library beside Maya."""
+        """Open the available shape libraries beside Maya."""
         if self._shape_picker is not None:
             self._shape_picker.show()
             self._shape_picker.raise_()
             self._shape_picker.activateWindow()
             return
-        dialog = ShapePickerDialog(self._mox_shapes, self)
+        dialog = ShapePickerDialog(self._available_shapes, self)
         dialog.setModal(False)
         dialog.setWindowModality(QtCore.Qt.WindowModality.NonModal)
         dialog.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose)
@@ -640,11 +653,14 @@ class FKBuilderWindow(QtWidgets.QDialog):
         if not dialog.selected_shape:
             return
         self._selected_shape_key = dialog.selected_shape
-        shape = self._mox_shapes[self._selected_shape_key]
+        shape = self._available_shapes[self._selected_shape_key]
         label = str(shape.get("label", self._selected_shape_key))
-        self.shape_field.setText("MOX / {0}".format(label))
+        library_name = str(shape.get("library_name", "Shape Library"))
+        self.shape_field.setText("{0} / {1}".format(library_name, label))
         self.log(
-            "コントローラー形状: MOX / {0}".format(label),
+            "コントローラー形状: {0} / {1}".format(
+                library_name, label
+            ),
             clear=True,
         )
 
@@ -691,7 +707,7 @@ class FKBuilderWindow(QtWidgets.QDialog):
                 offset_mode=offset_mode,
                 name_offset_rules=name_offset_rules,
                 include_end_joint=self.include_end_radio.isChecked(),
-                shape_data=self._mox_shapes.get(
+                shape_data=self._available_shapes.get(
                     self._selected_shape_key
                 ),
             )

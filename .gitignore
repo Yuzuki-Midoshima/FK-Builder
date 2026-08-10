@@ -42,3 +42,7 @@ mayaSwatches/
 Thumbs.db
 Desktop.ini
 .DS_Store
+
+# Third-party controller shapes are local UserData, never repository assets
+/fk_builder/data/mox_shapes.json
+/local_shape_libraries/

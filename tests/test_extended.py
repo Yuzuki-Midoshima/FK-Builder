@@ -1,24 +1,103 @@
+import json
+from pathlib import Path
+import tempfile
 import unittest
 
 from fk_builder.builder import FKBuilder
 from fk_builder.controller import CubeControllerFactory
-from fk_builder.shape_library import load_mox_shapes
+from fk_builder.shape_library import (
+    ShapeLibraryError,
+    discover_external_libraries,
+    load_shape_libraries,
+)
 from fk_builder.utils import FKBuilderError
 
 
 class ShapeLibraryTests(unittest.TestCase):
-    def test_bundled_shapes_have_valid_components(self):
-        shapes = load_mox_shapes()
-        self.assertTrue(shapes)
-        for shape_id, shape in shapes.items():
-            self.assertTrue(shape_id)
+    def test_bundled_original_shapes_have_valid_components(self):
+        shapes = load_shape_libraries(include_external=False)
+        self.assertEqual(
+            set(shapes),
+            {"basic_circle", "basic_square", "basic_diamond", "basic_cross"},
+        )
+        for shape in shapes.values():
+            self.assertEqual(shape["library_name"], "FK Builder Basic Shapes")
             components = shape.get("components") or [shape]
-            self.assertTrue(components)
             for component in components:
                 degree = int(component.get("degree", 1))
-                points = component.get("points")
-                self.assertIsInstance(points, list)
-                self.assertGreater(len(points), degree)
+                self.assertGreater(len(component["points"]), degree)
+
+    def test_external_library_is_loaded_from_user_data(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            user_data = Path(temporary)
+            library_dir = user_data / "shape_libraries"
+            library_dir.mkdir()
+            (library_dir / "custom.json").write_text(
+                json.dumps(
+                    {
+                        "library": {"name": "My Shapes"},
+                        "shapes": {
+                            "custom_triangle": {
+                                "label": "Triangle",
+                                "degree": 1,
+                                "points": [[0, 0, 1], [1, 0, -1], [-1, 0, -1], [0, 0, 1]],
+                            }
+                        },
+                    }
+                ),
+                encoding="utf-8",
+            )
+            shapes = load_shape_libraries(user_data_dir=user_data)
+            self.assertIn("custom_triangle", shapes)
+            self.assertEqual(shapes["custom_triangle"]["library_name"], "My Shapes")
+
+    def test_missing_external_directory_uses_bundled_shapes(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            user_data = Path(temporary) / "missing"
+            self.assertEqual(discover_external_libraries(user_data), ())
+            self.assertEqual(len(load_shape_libraries(user_data)), 4)
+
+    def test_duplicate_shape_id_is_rejected(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            user_data = Path(temporary)
+            library_dir = user_data / "shape_libraries"
+            library_dir.mkdir()
+            (library_dir / "duplicate.json").write_text(
+                json.dumps(
+                    {
+                        "shapes": {
+                            "basic_circle": {
+                                "degree": 1,
+                                "points": [[0, 0, 0], [1, 0, 0]],
+                            }
+                        }
+                    }
+                ),
+                encoding="utf-8",
+            )
+            with self.assertRaises(ShapeLibraryError):
+                load_shape_libraries(user_data)
+
+    def test_invalid_external_degree_is_rejected(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            user_data = Path(temporary)
+            library_dir = user_data / "shape_libraries"
+            library_dir.mkdir()
+            (library_dir / "invalid.json").write_text(
+                json.dumps(
+                    {
+                        "shapes": {
+                            "invalid": {
+                                "degree": "not-an-integer",
+                                "points": [[0, 0, 0], [1, 0, 0]],
+                            }
+                        }
+                    }
+                ),
+                encoding="utf-8",
+            )
+            with self.assertRaises(ShapeLibraryError):
+                load_shape_libraries(user_data)
 
     def test_invalid_shape_data_is_rejected(self):
         with self.assertRaises(FKBuilderError):

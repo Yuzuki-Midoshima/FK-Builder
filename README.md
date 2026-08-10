@@ -1,20 +1,20 @@
 # FK Builder for Maya
 
-Autodesk Maya 2026で、選択したJoint階層から汎用FK Controller Rigを構築するRigger / Technical Artist向けツールです。Controller生成、Zero Group、階層化、Constraint、Channel Lock、Color、Shape、Visibilityを一貫した手順で設定します。
-
-## Overview
-
-JointごとのController作成と命名、位置合わせ、階層化、Constraint設定を自動化し、手作業による設定漏れを減らします。Build前の検証、Build後のJoint行列検証、失敗時のUndo rollbackにより、既存のbind poseを保護します。
+Autodesk Maya 2026で、選択したJoint階層から汎用FK Controller Rigを構築するRigger / Technical Artist向けツールです。Controller生成、Zero Group、階層化、Constraint、Channel Lock、Color、Shape、Visibilityを一つのUIで設定できます。
 
 ## Demo
 
-デモ画像・動画は[`docs/media/`](docs/media/)へ追加できます。ポートフォリオ素材をMaya packageから分離して更新できる構成です。
+デモ画像・動画は[`docs/media/`](docs/media/)へ追加できます。
+
+## Overview
+
+JointごとのController作成と命名、位置合わせ、階層化、Constraint設定を自動化します。Build前後のJoint world matrix比較、重複名検証、失敗時のUndo rollbackにより、既存のbind poseを保護します。
 
 ## Features
 
 - Root Joint以下を親から子の順で検出
-- 対応するJoint suffixから`*_anim` Controllerと`*_zero` Groupを生成
-- 標準Cubeまたは同梱MOX NURBS curve shapeを選択
+- Joint suffixから`*_anim` Controllerと`*_zero` Groupを生成
+- 標準Cube、同梱の自作基本shape、外部JSON Shape Libraryを選択
 - Controller SizeとCVへのPosition / Rotation Offset適用
 - 全体、名前ルール、分岐単位でのColor・Offset・Channel Lock設定
 - End JointのInclude / Exclude
@@ -27,16 +27,15 @@ JointごとのController作成と命名、位置合わせ、階層化、Constrai
 
 ## Installation
 
-1. リポジトリをMayaからアクセス可能な場所へcloneまたはdownloadします。
-2. Maya Script EditorのPythonタブからlauncherを実行します。
-
-Mayaユーザースクリプトフォルダへ配置する例:
+リポジトリをMayaからアクセス可能な場所へcloneまたはdownloadします。
 
 ```text
 <Maya user scripts>/FK-Builder/
 ```
 
 ## Usage
+
+Maya Script EditorのPythonタブから実行します。
 
 ```python
 from pathlib import Path
@@ -49,37 +48,51 @@ runpy.run_path(str(tool_root / "launch_fk_builder.py"))
 
 1. 対象階層のRoot Jointを選択して`SET`を押します。
 2. Controller SizeとEnd Joint設定を確認します。
-3. Shape、Color、Offset、Channel Lockの適用方法を選択します。
+3. Shape、Color、Offset、Channel Lockを設定します。
 4. 必要ならSettings ControllerとVisibility attributeを設定します。
 5. `BUILD FK`を実行し、Logで結果を確認します。
 
+## Shape Libraries
+
+公開リポジトリには、FK Builder用に新規作成した基本shapeだけを同梱しています。MoxRigControllerを含む第三者由来のshape dataは同梱していません。
+
+外部libraryは次のUserDataディレクトリへJSONファイルとして配置します。
+
+```text
+<Maya user scripts>/FK-Builder-UserData/shape_libraries/*.json
+```
+
+場所を明示する場合は、`FK_BUILDER_USER_DATA_DIR`環境変数へ`shape_libraries`の親ディレクトリを指定できます。`MAYA_APP_DIR`が設定されている環境にも対応します。外部データの入手・利用・保管は、それぞれの利用条件に従ってください。
+
+外部libraryが存在しない場合も同梱shapeだけで起動します。不正なJSONや重複したShape IDは黙って無視・上書きせず、UIのLogへ警告を表示して同梱shapeへフォールバックします。
+
 ## Technical Highlights
 
-- UI、Build orchestration、curve生成、階層処理、Maya helperをmodule単位で分離
-- `maya.cmds`を遅延importし、Builderへcommand moduleを注入可能
+- UI、build orchestration、curve生成、階層処理、Maya helperをmodule単位で分離
+- `maya.cmds`を遅延importし、builderへcommand moduleを注入可能
 - `BuildResult` frozen dataclassで生成nodeを明示的に返却
 - Maya DAG long pathを使った親子探索とrecursive branch grouping
-- duplicate controller / zero nameをBuild前に検出・回避
-- Curve CVへEuler rotationとtranslationを焼き込み、transformをfreeze
-- 複数componentのNURBS shapeを1つのController transformへ統合
-- Constraint作成後にJoint world matrixを比較し、bind pose変化時はrollback
+- Curve CVへEuler rotationとtranslationを焼き込み、Transformをfreeze
+- 複数componentのNURBS shapeを一つのController transformへ統合
+- 同梱データとリポジトリ外UserDataを分離した汎用JSON Shape Library Loader
+- Shape ID重複、schema、degree、CV pointのvalidation
 - Maya非依存ロジックを標準`unittest`で検証
 
 ## Project Structure
 
 ```text
-fk_builder/                    公開Python package
-  builder.py                   検証とFK build orchestration
+fk_builder/
+  builder.py                   Validation and FK build orchestration
   controller.py                NURBS controller factory
-  hierarchy.py                 FK hierarchy構築
-  shape_library.py             同梱shape JSON読込
+  hierarchy.py                 FK hierarchy construction
+  shape_library.py             Bundled / external JSON library loader
   shape_picker.py              PySide6 visual shape picker
   ui.py                        PySide6 UI
-  main.py                      Maya main window integration
-  utils.py                     命名・選択・Maya helper
-  data/mox_shapes.json         Controller shape data
-tests/                         Maya非依存unit tests
-docs/media/                    Demo素材
+  main.py                      Maya main-window integration
+  utils.py                     Naming, selection, and Maya helpers
+  data/bundled_shapes.json     Original FK Builder basic shapes
+tests/                         Maya-independent unit tests
+docs/media/                    Demo assets
 launch_fk_builder.py           Maya launcher
 ```
 
@@ -96,35 +109,28 @@ launch_fk_builder.py           Maya launcher
 
 ### Automated Tests
 
-Maya非依存テストは標準ライブラリだけで実行できます。
-
 ```bash
 python -m unittest discover -s tests -p "test_*.py" -v
 ```
 
-自動テストは命名、選択検証、Joint階層順、Color解決、MOX JSON検証、CV offset計算、Visibility attribute正規化、Shape validation、branch groupingを対象とします。GitHub Actionsでは全Pythonファイルのcompile checkとMaya非依存import checkも実行します。
+自動テストは命名、選択検証、Joint階層順、Color解決、同梱shape、外部library探索・読込、重複ID拒否、CV offset計算、Visibility attribute正規化、Shape validation、branch groupingを対象とします。GitHub ActionsではPython 3.11を使い、全Pythonファイルのcompile check、Maya非依存unit test、主要packageのimport checkを実行します。
 
 ### Maya Manual Tests
 
 - launcherとPySide6 windowの起動・再読み込み
+- 同梱4形状だけでのShape Picker表示とcurve生成
+- UserDataに配置した外部libraryのShape Picker表示とcurve生成
 - Root Joint検出とEnd Joint除外
-- Cube / MOX shapeのcurve生成とvisual picker
 - Color、Offset、Channel Lockの全適用mode
 - Controller / Zero hierarchyと親階層
 - Parent / Scale Constraintとbind pose維持
 - Visibility attributeとroot zero visibility接続
-- duplicate node検出とエラー表示
-- Build途中の失敗時にUndoで完全に戻ること
-- Maya Undo履歴と既存animationへの影響
+- duplicate node検出、エラー表示、Undo rollback
 
 ## Development Workflow
 
-変更は`feature/*`、`fix/*`、`chore/*`ブランチで行い、`main`向けPull Requestを作成します。CI成功とMaya手動確認の後にのみmergeし、`main`を公開可能な安定版として維持します。
-
-## Third-Party Assets
-
-`fk_builder/data/mox_shapes.json`のmetadataは`MoxRigController 2015-07-23`をsourceとして示しています。公開・再配布前に、リポジトリ所有者が元データの利用条件と必要なattributionを確認してください。
+変更は`feature/*`、`fix/*`、`chore/*`ブランチで行い、`main`向けPull Requestを作成します。CI成功とMaya手動確認後にのみmergeし、`main`を公開可能な安定版として維持します。
 
 ## License
 
-ライセンスは現在指定されていません。コードおよび同梱shape dataの利用・再配布条件は、権利確認後に明示してください。
+ライセンスは現在指定されていません。コードおよび同梱shapeの利用・再配布条件は、リポジトリ所有者が明示するまで未許諾として扱ってください。第三者shape libraryはこのリポジトリの配布物ではありません。
