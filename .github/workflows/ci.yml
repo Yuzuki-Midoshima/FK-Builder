@@ -15,21 +15,21 @@ jobs:
     timeout-minutes: 10
 
     steps:
-      - name: Check out repository
+      - name: リポジトリをチェックアウト
         uses: actions/checkout@v4
 
-      - name: Set up Python 3.11
+      - name: Python 3.11をセットアップ
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      - name: Compile Python sources
+      - name: Python構文・コンパイル確認
         run: python -m compileall -q -f fk_builder tests launch_fk_builder.py
 
-      - name: Run Maya-independent unit tests
+      - name: Maya非依存ユニットテスト
         run: python -m unittest discover -s tests -p "test_*.py" -v
 
-      - name: Verify Maya-independent imports
+      - name: Maya非依存import確認
         run: |
           python - <<'PY'
           import fk_builder

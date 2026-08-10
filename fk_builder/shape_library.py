@@ -61,12 +61,12 @@ def load_shape_library(path: Path) -> dict[str, dict[str, Any]]:
             payload = json.load(stream)
     except (OSError, UnicodeError, json.JSONDecodeError) as exc:
         raise ShapeLibraryError(
-            "Shape libraryを読み込めません: {0}: {1}".format(path, exc)
+            "シェイプライブラリを読み込めません: {0}: {1}".format(path, exc)
         ) from exc
 
     if not isinstance(payload, dict) or not isinstance(payload.get("shapes"), dict):
         raise ShapeLibraryError(
-            "Shape libraryにはshapes objectが必要です: {0}".format(path)
+            "シェイプライブラリにはshapesオブジェクトが必要です: {0}".format(path)
         )
 
     library = payload.get("library")
@@ -79,10 +79,10 @@ def load_shape_library(path: Path) -> dict[str, dict[str, Any]]:
     result: dict[str, dict[str, Any]] = {}
     for shape_id, raw_shape in payload["shapes"].items():
         if not isinstance(shape_id, str) or not shape_id.strip():
-            raise ShapeLibraryError("Shape IDが不正です: {0}".format(path))
+            raise ShapeLibraryError("シェイプIDが不正です: {0}".format(path))
         if not isinstance(raw_shape, dict):
             raise ShapeLibraryError(
-                "Shape dataがobjectではありません: {0}: {1}".format(
+                "シェイプデータがオブジェクトではありません: {0}: {1}".format(
                     path, shape_id
                 )
             )
@@ -90,12 +90,12 @@ def load_shape_library(path: Path) -> dict[str, dict[str, Any]]:
         components = shape.get("components") or [shape]
         if not isinstance(components, list) or not components:
             raise ShapeLibraryError(
-                "Shape componentsが不正です: {0}: {1}".format(path, shape_id)
+                "シェイプのcomponentsが不正です: {0}: {1}".format(path, shape_id)
             )
         for component in components:
             if not isinstance(component, dict):
                 raise ShapeLibraryError(
-                    "Shape componentがobjectではありません: {0}: {1}".format(
+                    "シェイプcomponentがオブジェクトではありません: {0}: {1}".format(
                         path, shape_id
                     )
                 )
@@ -103,20 +103,20 @@ def load_shape_library(path: Path) -> dict[str, dict[str, Any]]:
                 degree = int(component.get("degree", 1))
             except (TypeError, ValueError) as exc:
                 raise ShapeLibraryError(
-                    "Shape degreeが整数ではありません: {0}: {1}".format(
+                    "シェイプのdegreeが整数ではありません: {0}: {1}".format(
                         path, shape_id
                     )
                 ) from exc
             if degree < 1:
                 raise ShapeLibraryError(
-                    "Shape degreeは1以上が必要です: {0}: {1}".format(
+                    "シェイプのdegreeは1以上が必要です: {0}: {1}".format(
                         path, shape_id
                     )
                 )
             points = component.get("points")
             if not isinstance(points, list) or len(points) <= degree:
                 raise ShapeLibraryError(
-                    "Shape pointsが不足しています: {0}: {1}".format(
+                    "シェイプのpointsが不足しています: {0}: {1}".format(
                         path, shape_id
                     )
                 )
@@ -127,7 +127,7 @@ def load_shape_library(path: Path) -> dict[str, dict[str, Any]]:
                 for point in points
             ):
                 raise ShapeLibraryError(
-                    "Shape pointは3つの数値が必要です: {0}: {1}".format(
+                    "シェイプのpointには3つの数値が必要です: {0}: {1}".format(
                         path, shape_id
                     )
                 )
@@ -151,7 +151,7 @@ def load_shape_libraries(
         for shape_id, shape in load_shape_library(path).items():
             if shape_id in shapes:
                 raise ShapeLibraryError(
-                    "Shape IDが重複しています: {0} ({1})".format(
+                    "シェイプIDが重複しています: {0} ({1})".format(
                         shape_id, path
                     )
                 )

@@ -21,7 +21,7 @@ class ShapeLibraryTests(unittest.TestCase):
             {"basic_circle", "basic_square", "basic_diamond", "basic_cross"},
         )
         for shape in shapes.values():
-            self.assertEqual(shape["library_name"], "FK Builder Basic Shapes")
+            self.assertEqual(shape["library_name"], "FK Builder 基本シェイプ")
             components = shape.get("components") or [shape]
             for component in components:
                 degree = int(component.get("degree", 1))

@@ -62,7 +62,7 @@ class ShapePickerDialog(QtWidgets.QDialog):
             item.setData(QtCore.Qt.ItemDataRole.UserRole, key)
             item.setToolTip(
                 "{0} / {1}".format(
-                    shape.get("library_name", "Shape Library"),
+                    shape.get("library_name", "シェイプライブラリ"),
                     shape.get("source", key),
                 )
             )

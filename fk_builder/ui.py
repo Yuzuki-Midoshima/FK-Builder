@@ -399,7 +399,7 @@ class FKBuilderWindow(QtWidgets.QDialog):
         self.log("準備完了。", clear=True)
         if self._shape_library_warning:
             self.log(
-                "外部Shape Library警告: {0}".format(
+                "外部シェイプライブラリ警告: {0}".format(
                     self._shape_library_warning
                 )
             )
@@ -655,7 +655,9 @@ class FKBuilderWindow(QtWidgets.QDialog):
         self._selected_shape_key = dialog.selected_shape
         shape = self._available_shapes[self._selected_shape_key]
         label = str(shape.get("label", self._selected_shape_key))
-        library_name = str(shape.get("library_name", "Shape Library"))
+        library_name = str(
+            shape.get("library_name", "シェイプライブラリ")
+        )
         self.shape_field.setText("{0} / {1}".format(library_name, label))
         self.log(
             "コントローラー形状: {0} / {1}".format(
