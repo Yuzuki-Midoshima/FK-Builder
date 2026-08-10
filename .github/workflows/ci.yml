@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  python-checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: リポジトリをチェックアウト
+        uses: actions/checkout@v4
+
+      - name: Python 3.11をセットアップ
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Python構文・コンパイル確認
+        run: python -m compileall -q -f fk_builder tests launch_fk_builder.py
+
+      - name: Maya非依存ユニットテスト
+        run: python -m unittest discover -s tests -p "test_*.py" -v
+
+      - name: Maya非依存import確認
+        run: |
+          python - <<'PY'
+          import fk_builder
+          from fk_builder.builder import BuildResult, FKBuilder
+          from fk_builder.controller import CubeControllerFactory
+          from fk_builder.shape_library import load_shape_libraries
+          from fk_builder.utils import FKBuilderError
+
+          assert fk_builder.FKBuilder is FKBuilder
+          assert BuildResult and CubeControllerFactory and FKBuilderError
+          shapes = load_shape_libraries(include_external=False)
+          assert {"basic_circle", "basic_square", "basic_diamond", "basic_cross"} == set(shapes)
+          PY

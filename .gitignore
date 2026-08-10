@@ -1,0 +1,47 @@
+# Python bytecode and caches
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Test and coverage output
+.coverage
+.coverage.*
+htmlcov/
+
+# Virtual environments and packaging output
+.venv/
+venv/
+build/
+dist/
+*.egg-info/
+
+# Editors and local tools
+.vscode/
+.idea/
+*.code-workspace
+*.swp
+
+# Logs and temporary files
+*.log
+*.tmp
+*.bak
+
+# Maya-generated backup, autosave, and preview data
+autosave/
+incrementalSave/
+mayaSwatches/
+*.autosave
+*.ma~
+*.mb~
+*.swatches
+
+# Operating-system metadata
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# User-provided controller shapes are local UserData, never repository assets
+/local_shape_libraries/
