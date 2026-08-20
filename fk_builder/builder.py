@@ -95,6 +95,7 @@ class FKBuilder:
         ] | None = None,
         include_end_joint: bool = True,
         shape_data: dict[str, Any] | None = None,
+        create_zero_groups: bool = True,
     ) -> BuildResult:
         """Build the complete FK setup as one Maya undo operation."""
         emit = log or (lambda _message: None)
@@ -171,10 +172,17 @@ class FKBuilder:
                     position_offset,
                     rotation_offset,
                 )
-                zero = self.cmds.group(empty=True, name=group_name)
-                self.cmds.parent(controller, zero)
+                hierarchy_node = controller
+                if create_zero_groups:
+                    zero = self.cmds.group(empty=True, name=group_name)
+                    self.cmds.parent(controller, zero)
+                    hierarchy_node = zero
                 self.cmds.matchTransform(
-                    zero, joint, position=True, rotation=True, scale=True
+                    hierarchy_node,
+                    joint,
+                    position=True,
+                    rotation=True,
+                    scale=True,
                 )
                 self._lock_channels(
                     controller,
@@ -188,21 +196,30 @@ class FKBuilder:
                     ),
                 )
                 controllers[joint] = controller
-                zero_groups[joint] = zero
+                if create_zero_groups:
+                    zero_groups[joint] = hierarchy_node
 
             emit("{0}個のコントローラーを作成しました。".format(len(controllers)))
             emit("FK階層を作成しています...")
             create_fk_hierarchy(
-                self.cmds, joints, controllers, zero_groups
+                self.cmds,
+                joints,
+                controllers,
+                zero_groups if create_zero_groups else controllers,
+            )
+            root_hierarchy_node = (
+                zero_groups[joints[0]]
+                if create_zero_groups
+                else controllers[joints[0]]
             )
             self._parent_root_controller(
-                joints[0], zero_groups[joints[0]]
+                joints[0], root_hierarchy_node
             )
             if settings_controller:
                 emit("表示切替を作成しています...")
                 self._create_visibility_switch(
                     settings_controller,
-                    zero_groups[joints[0]],
+                    root_hierarchy_node,
                     visibility_attribute[0],
                     visibility_attribute[1],
                 )
@@ -245,7 +262,9 @@ class FKBuilder:
         return BuildResult(
             joints=tuple(joints),
             controllers=tuple(controllers[joint] for joint in joints),
-            zero_groups=tuple(zero_groups[joint] for joint in joints),
+            zero_groups=tuple(zero_groups[joint] for joint in joints)
+            if create_zero_groups
+            else (),
             constraints=tuple(constraints),
         )
 

@@ -506,10 +506,16 @@ class FKBuilderWindow(QtWidgets.QDialog):
 
         self.include_end_radio = QtWidgets.QRadioButton("作成")
         self.exclude_end_radio = QtWidgets.QRadioButton("除外")
-        self.include_end_radio.setChecked(True)
+        self.exclude_end_radio.setChecked(True)
         self.end_joint_group = QtWidgets.QButtonGroup(self)
         self.end_joint_group.addButton(self.include_end_radio)
         self.end_joint_group.addButton(self.exclude_end_radio)
+        self.create_zero_radio = QtWidgets.QRadioButton("作成")
+        self.exclude_zero_radio = QtWidgets.QRadioButton("除外")
+        self.create_zero_radio.setChecked(True)
+        self.zero_group = QtWidgets.QButtonGroup(self)
+        self.zero_group.addButton(self.create_zero_radio)
+        self.zero_group.addButton(self.exclude_zero_radio)
         self.build_button = QtWidgets.QPushButton("FKを作成")
         self.build_button.setMinimumHeight(36)
         self.build_button.setStyleSheet(
@@ -553,6 +559,12 @@ class FKBuilderWindow(QtWidgets.QDialog):
         end_joint_row.addWidget(self.include_end_radio)
         end_joint_row.addWidget(self.exclude_end_radio)
         layout.addLayout(end_joint_row)
+        zero_group_row = QtWidgets.QHBoxLayout()
+        zero_group_row.addWidget(QtWidgets.QLabel("ZEROグループ"))
+        zero_group_row.addStretch(1)
+        zero_group_row.addWidget(self.create_zero_radio)
+        zero_group_row.addWidget(self.exclude_zero_radio)
+        layout.addLayout(zero_group_row)
         layout.addWidget(self.build_button)
         layout.addWidget(QtWidgets.QLabel("ログ"))
         layout.addWidget(self.log_output)
@@ -709,6 +721,7 @@ class FKBuilderWindow(QtWidgets.QDialog):
                 offset_mode=offset_mode,
                 name_offset_rules=name_offset_rules,
                 include_end_joint=self.include_end_radio.isChecked(),
+                create_zero_groups=self.create_zero_radio.isChecked(),
                 shape_data=self._available_shapes.get(
                     self._selected_shape_key
                 ),
