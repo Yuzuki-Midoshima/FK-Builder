@@ -1,5 +1,7 @@
 # FK Builder
 
+![FK Builderのメインウィンドウ](docs/media/fk-builder-main-window.png)
+
 Autodesk Maya向けの、**Joint階層からFK Controller Rigを自動構築するためのリギングツール**です。
 
 Controllerの作成、位置合わせ、階層化、Constraint、Shape、Color、Channel Lockなど、FKリグ構築時に繰り返し発生する作業をひとつのUIからまとめて設定・実行できます。
@@ -44,8 +46,6 @@ FK Controller Rigを手作業で構築する場合、
 Joint数が増えるほど作業量が増えるだけでなく、命名、階層、Constraint、Channel設定などの小さな設定漏れも発生しやすくなります。
 
 FK BuilderではRoot Jointを指定するとJoint階層を解析し、必要なControllerを親から子へ自動構築します。
-
-![FK Builderのメインウィンドウ](docs/media/fk-builder-main-window.png)
 
 ```text
 Joint Hierarchy
