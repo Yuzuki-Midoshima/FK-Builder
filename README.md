@@ -45,6 +45,8 @@ Joint数が増えるほど作業量が増えるだけでなく、命名、階層
 
 FK BuilderではRoot Jointを指定するとJoint階層を解析し、必要なControllerを親から子へ自動構築します。
 
+![FK Builderのメインウィンドウ](docs/media/fk-builder-main-window.png)
+
 ```text
 Joint Hierarchy
       ↓
@@ -81,6 +83,8 @@ Joint階層に合わせてController側にもFK階層を構築するため、Bui
 
 Controllerの位置・回転をBuild前に調整できます。
 
+![Controllerの位置・回転設定](docs/media/controller-position-rotation.png)
+
 JointへControllerを配置したあとに一つずつShapeを修正するのではなく、生成前の設定として調整できるため、Build後の手直しを減らせます。
 
 Controllerの見た目を調整するための処理と、実際にアニメーションで使用するTransformをできるだけ分離し、扱いやすいControllerを生成することを意識しています。
@@ -90,6 +94,8 @@ Controllerの見た目を調整するための処理と、実際にアニメー�
 ### Channel Lock
 
 Controllerごとに不要なTransform ChannelをLockできます。
+
+![Channel Lock設定](docs/media/channel-lock-settings.png)
 
 例えば回転のみを使用するFK Controllerでは、不要なTranslate / Scale Channelを制限することで誤操作を防止できます。
 
@@ -101,6 +107,8 @@ Controllerごとに不要なTransform ChannelをLockできます。
 
 Controller ColorをBuild前に設定できます。
 
+![Controller Color設定](docs/media/controller-color-settings.png)
+
 左右や部位ごとにControllerの色を分けることで、Viewport上での視認性を高められます。
 
 Controller生成後に一つずつ色を設定する必要がなく、Build時点で見た目のルールを統一できます。
@@ -110,6 +118,10 @@ Controller生成後に一つずつ色を設定する必要がなく、Build時�
 ### Controller Shape
 
 用途に合わせてController Shapeを選択できます。
+
+![Controller Shape設定](docs/media/controller-shape-settings.png)
+
+![Controller Shape一覧](docs/media/controller-shape-picker.png)
 
 Controllerの役割に応じてShapeを変更できるため、単一の形状だけでFK Rigを構築するのではなく、操作性や視認性を考慮したController構成にできます。
 
@@ -400,7 +412,7 @@ Result
 
 ## Technical Details
 
-* Autodesk Maya 2026
+* Autodesk Maya 2026（開発・動作確認環境）
 * Python 3
 * maya.cmds
 * PySide6
@@ -426,9 +438,11 @@ Result
 
 ## Requirements
 
-* Autodesk Maya 2026
+* Autodesk Maya 2026（動作確認済み）
 * Python 3
 * PySide6 / shiboken6
+
+現在はMaya 2026で開発・動作確認を行っています。その他のMaya VersionおよびOS環境については未検証です。
 
 PySide6 / shiboken6はMaya 2026に同梱されているものを使用します。
 
