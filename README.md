@@ -1,4 +1,4 @@
-# FK Builder
+# FK Builder ![CI](https://github.com/Yuzuki-Midoshima/FK-Builder/actions/workflows/ci.yml/badge.svg) ![Maya](https://img.shields.io/badge/Autodesk%20Maya-2026-0696D7) ![Python](https://img.shields.io/badge/Python-3.x-3776AB)
 
 ![FK Builderのメインウィンドウ](docs/media/fk-builder-main-window.png)
 
