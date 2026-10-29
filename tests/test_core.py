@@ -21,9 +21,14 @@ class NamingTests(unittest.TestCase):
         self.assertEqual(controller_name(joint), "character:index1_anim")
         self.assertEqual(zero_name(joint), "character:index1_zero")
 
-    def test_controller_name_requires_joint_suffix(self):
-        with self.assertRaises(FKBuilderError):
-            controller_name("index1")
+    def test_controller_name_accepts_any_joint_name(self):
+        self.assertEqual(controller_name("index1"), "index1_anim")
+
+    def test_controller_name_accepts_suffix_like_text(self):
+        self.assertEqual(
+            controller_name("HAIR_05C_01_jnt1"),
+            "HAIR_05C_01_jnt1_anim",
+        )
 
 
 class SelectionCmds:

@@ -233,17 +233,21 @@ class FKBuilder:
                     maintainOffset=True,
                     name=ctrl_name + "_parentConstraint",
                 )[0]
-                scale_constraint = self.cmds.scaleConstraint(
+                scale_constraint = self._create_scale_constraint(
                     controllers[joint],
                     joint,
-                    # Joint segmentScaleCompensate can otherwise change the
-                    # bind pose immediately on non-uniformly scaled chains.
-                    maintainOffset=True,
-                    name=ctrl_name + "_scaleConstraint",
-                )[0]
-                constraints.extend(
-                    (parent_constraint, scale_constraint)
+                    ctrl_name + "_scaleConstraint",
                 )
+                constraints.append(parent_constraint)
+                if scale_constraint:
+                    constraints.append(scale_constraint)
+                else:
+                    emit(
+                        "Scaleに既存接続があるため、Scale Constraintを"
+                        "スキップしました: {0}".format(
+                            joint.rsplit("|", 1)[-1]
+                        )
+                    )
             self._validate_joint_matrices(
                 joints,
                 original_joint_matrices,
@@ -267,6 +271,58 @@ class FKBuilder:
             else (),
             constraints=tuple(constraints),
         )
+
+    def _create_scale_constraint(
+        self,
+        controller: str,
+        joint: str,
+        name: str,
+    ) -> str | None:
+        """Constrain writable scale axes without replacing existing inputs.
+
+        Maya refuses to create a scaleConstraint when a destination scale
+        channel is locked.  A lock is safe to restore after connecting the
+        constraint, while an existing incoming connection must be preserved
+        and is therefore skipped.
+        """
+        axes = ("X", "Y", "Z")
+        skipped = [
+            axis.lower()
+            for axis in axes
+            if self.cmds.connectionInfo(
+                "{0}.scale{1}".format(joint, axis),
+                isDestination=True,
+            )
+        ]
+        if len(skipped) == len(axes):
+            return None
+
+        lock_plugs = ["{0}.scale".format(joint)] + [
+            "{0}.scale{1}".format(joint, axis)
+            for axis in axes
+            if axis.lower() not in skipped
+        ]
+        locked = [
+            plug for plug in lock_plugs
+            if self.cmds.getAttr(plug, lock=True)
+        ]
+        try:
+            for plug in locked:
+                self.cmds.setAttr(plug, lock=False)
+            kwargs = {
+                "maintainOffset": True,
+                "name": name,
+            }
+            if skipped:
+                kwargs["skip"] = skipped
+            return self.cmds.scaleConstraint(
+                controller,
+                joint,
+                **kwargs,
+            )[0]
+        finally:
+            for plug in reversed(locked):
+                self.cmds.setAttr(plug, lock=True)
 
     def _validate_joint_matrices(
         self,

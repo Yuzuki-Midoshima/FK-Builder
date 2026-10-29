@@ -1,189 +1,215 @@
-# FK Builder ![CI](https://github.com/Yuzuki-Midoshima/FK-Builder/actions/workflows/ci.yml/badge.svg) ![Maya](https://img.shields.io/badge/Autodesk%20Maya-2026-0696D7) ![Python](https://img.shields.io/badge/Python-3.x-3776AB)
+# FK Builder
 
-![FK Builderのメインウィンドウ](docs/media/fk-builder-main-window.png)
+[![CI](https://github.com/Yuzuki-Midoshima/FK-Builder/actions/workflows/ci.yml/badge.svg)](https://github.com/Yuzuki-Midoshima/FK-Builder/actions/workflows/ci.yml)
+![Maya](https://img.shields.io/badge/Autodesk%20Maya-2026-0696D7)
+![Python](https://img.shields.io/badge/Python-3.x-3776AB)
 
-Autodesk Maya向けの、**Joint階層からFK Controller Rigを自動構築するためのリギングツール**です。
+![FK Builder メインウィンドウ](docs/images/fk-builder-main-window.png)
 
-Controllerの作成、位置合わせ、階層化、Constraint、Shape、Color、Channel Lockなど、FKリグ構築時に繰り返し発生する作業をひとつのUIからまとめて設定・実行できます。
+Autodesk Maya向けの、**ジョイント階層からFKコントローラーリグを自動構築するリギングツール**です。
+
+コントローラーの作成、位置合わせ、階層化、コンストレイント設定、シェイプ、カラー、Channel Lockなど、FKリグ構築時に繰り返し発生する作業を、ひとつのUIからまとめて設定・実行できます。
 
 手作業による設定漏れや命名ミスを減らしながら、**素早く、一貫した構造のFKリグを構築すること**を目的として開発しました。
 
 ---
 
-## Features
+## 主な機能
 
-* **Automatic FK Rig Build**
-  選択したRoot Joint以下の階層を解析し、Joint構造に対応したFK Controller Rigを自動構築します。
+- **FKリグの自動構築**  
+  選択したルートジョイント以下の階層を解析し、ジョイント構造に対応したFKコントローラーリグを自動構築します。
 
-* **Controller Customization**
-  ControllerのPosition / Rotation / Channel Lock / Color / ShapeをBuild前に設定できます。
+- **コントローラーの調整**  
+  コントローラーの位置、回転、Channel Lock、カラー、シェイプを構築前に設定できます。
 
-* **Flexible Output Structure**
-  末端JointのController生成やZERO Groupの有無を選択でき、用途に合わせて出力するHierarchyを変更できます。
+- **柔軟な出力構造**  
+  末端ジョイントへのコントローラー生成やZERO Groupの有無を選択でき、用途に合わせて生成する階層構造を変更できます。
 
-* **Visibility Control**
-  任意のControllerへ表示切替Attributeを追加し、生成したFK Controller群のVisibilityをまとめて管理できます。
+- **表示切替管理**  
+  任意のコントローラーへ表示切替用Attributeを追加し、生成したFKコントローラー群の表示・非表示をまとめて管理できます。
 
-* **Shape Library**
-  複数のController Shapeから用途に合った形状を選択できます。
+- **シェイプライブラリ**  
+  複数のコントローラーシェイプから、用途に合った形状を選択できます。
 
-* **Validation & Rollback**
-  Build前に必要なNodeや設定を検証し、途中で問題が発生した場合もSceneへの影響を抑えます。
+- **事前検証 / ロールバック**  
+  構築前に必要なノードや設定を検証し、途中で問題が発生した場合もシーンへの影響を抑えます。
 
-* **Reusable Workflow**
-  特定のキャラクター専用ではなく、異なるJoint Chainへ繰り返し利用できるFK Builderとして設計しています。
+- **再利用可能なワークフロー**  
+  特定のキャラクター専用ではなく、異なるジョイントチェーンへ繰り返し利用できるFK Builderとして設計しています。
 
 ---
 
-## Overview
+## 概要
 
-FK Controller Rigを手作業で構築する場合、
+FKコントローラーリグを手作業で構築する場合、
 
-**Controller作成 → Jointへの位置合わせ → Shape調整 → ZERO Group作成 → 階層化 → Constraint → Color設定 → Channel Lock**
+**コントローラー作成 → ジョイントへの位置合わせ → シェイプ調整 → ZERO Group作成 → 階層化 → コンストレイント設定 → カラー設定 → Channel Lock**
 
-といった定型作業をJointごとに繰り返す必要があります。
+といった定型作業をジョイントごとに繰り返す必要があります。
 
-Joint数が増えるほど作業量が増えるだけでなく、命名、階層、Constraint、Channel設定などの小さな設定漏れも発生しやすくなります。
+ジョイント数が増えるほど作業量が増えるだけでなく、命名、階層構造、コンストレイント、Channel設定などの細かな設定漏れも発生しやすくなります。
 
-FK BuilderではRoot Jointを指定するとJoint階層を解析し、必要なControllerを親から子へ自動構築します。
+FK Builderではルートジョイントを指定すると、そのジョイント以下の階層を解析し、必要なコントローラーを親から子へ自動構築します。
 
 ```text
-Joint Hierarchy
+ジョイント階層
       ↓
-Hierarchy Analysis
+階層解析
       ↓
-Build Settings
+構築設定
       ↓
-Controller Generation
+コントローラー生成
       ↓
-FK Hierarchy
+FK階層構築
       ↓
-Constraint
+コンストレイント設定
       ↓
-Validation
+最終検証
 ```
 
-単純にControllerを大量生成するのではなく、**構築前に見た目・操作方法・出力構造をまとめて指定し、一貫したFK Rigとして出力できること**を重視しています。
+単純にコントローラーを大量生成するのではなく、**構築前に見た目・操作方法・出力構造をまとめて指定し、一貫したFKリグとして出力できること**を重視しています。
+
+### 動作例
+
+![FKリグ自動構築](docs/gifs/fk_builder.gif)
 
 ---
 
-## Main Functions
+## 機能詳細
 
-### Automatic FK Build
+### FKリグの自動構築
 
-Root Jointを指定すると、そのJoint以下の階層を解析し、対応するControllerを自動生成します。
+ルートジョイントを指定すると、そのジョイント以下の階層を解析し、対応するコントローラーを自動生成します。
 
-Joint階層に合わせてController側にもFK階層を構築するため、Build後すぐに通常のFK Controllerとして操作できます。
+ジョイント階層に合わせてコントローラー側にもFK階層を構築するため、構築後すぐに通常のFKコントローラーとして操作できます。
 
-繰り返し発生するController作成や階層設定をまとめて処理することで、手作業による設定差を減らします。
+繰り返し発生するコントローラー作成や階層設定をまとめて処理することで、手作業による設定差を減らします。
+
+```text
+ルートジョイント
+   │
+   ├─ ジョイント
+   │   └─ ジョイント
+   │
+   └─ ジョイント
+
+        ↓
+
+FKコントローラー
+   │
+   ├─ FKコントローラー
+   │   └─ FKコントローラー
+   │
+   └─ FKコントローラー
+```
 
 ---
 
-### Controller Position / Rotation
+### コントローラーの位置 / 回転
 
-Controllerの位置・回転をBuild前に調整できます。
+コントローラーの位置と回転を、構築前に調整できます。
 
-![Controllerの位置・回転設定](docs/media/controller-position-rotation.png)
+![コントローラーの位置・回転設定](docs/images/controller-position-rotation.png)
 
-JointへControllerを配置したあとに一つずつShapeを修正するのではなく、生成前の設定として調整できるため、Build後の手直しを減らせます。
+ジョイントへコントローラーを配置したあとに一つずつシェイプを修正するのではなく、生成前の設定として調整できるため、構築後の手直しを減らせます。
 
-Controllerの見た目を調整するための処理と、実際にアニメーションで使用するTransformをできるだけ分離し、扱いやすいControllerを生成することを意識しています。
+コントローラーの見た目を調整する処理と、実際にアニメーションで使用するTransformをできるだけ分離し、扱いやすいコントローラーを生成することを意識しています。
 
 ---
 
 ### Channel Lock
 
-Controllerごとに不要なTransform ChannelをLockできます。
+コントローラーごとに、不要なTransform ChannelをLockできます。
 
-![Channel Lock設定](docs/media/channel-lock-settings.png)
+![Channel Lock設定](docs/images/channel-lock-settings.png)
 
-例えば回転のみを使用するFK Controllerでは、不要なTranslate / Scale Channelを制限することで誤操作を防止できます。
+例えば回転のみを使用するFKコントローラーでは、不要なTranslate / Scale Channelを制限することで誤操作を防止できます。
 
-単にControllerを生成するだけではなく、**アニメーターがどのChannelを操作すればよいか分かりやすい状態まで構築すること**を目的としています。
-
----
-
-### Controller Color
-
-Controller ColorをBuild前に設定できます。
-
-![Controller Color設定](docs/media/controller-color-settings.png)
-
-左右や部位ごとにControllerの色を分けることで、Viewport上での視認性を高められます。
-
-Controller生成後に一つずつ色を設定する必要がなく、Build時点で見た目のルールを統一できます。
+単にコントローラーを生成するだけではなく、**アニメーターがどのChannelを操作すればよいか分かりやすい状態まで構築すること**を目的としています。
 
 ---
 
-### Controller Shape
+### コントローラーカラー
 
-用途に合わせてController Shapeを選択できます。
+コントローラーのカラーを構築前に設定できます。
 
-![Controller Shape設定](docs/media/controller-shape-settings.png)
+![コントローラーカラー設定](docs/images/controller-color-settings.png)
 
-![Controller Shape一覧](docs/media/controller-shape-picker.png)
+左右や部位ごとにコントローラーの色を分けることで、Viewport上での視認性を高められます。
 
-Controllerの役割に応じてShapeを変更できるため、単一の形状だけでFK Rigを構築するのではなく、操作性や視認性を考慮したController構成にできます。
-
-Shape DataとBuild処理を分離することで、Shape Libraryを追加・変更しやすい構造を意識しています。
+コントローラー生成後に一つずつ色を設定する必要がなく、構築時点で見た目のルールを統一できます。
 
 ---
 
-### End Joint Option
+### コントローラーシェイプ
 
-Joint Chainの末端JointにControllerを生成するかどうかを選択できます。
+用途に合わせてコントローラーシェイプを選択できます。
+
+![コントローラーシェイプ設定](docs/images/controller-shape-settings.png)
+
+![コントローラーシェイプ一覧](docs/images/controller-shape-picker.png)
+
+コントローラーの役割に応じてシェイプを変更できるため、単一の形状だけでFKリグを構築するのではなく、操作性や視認性を考慮したコントローラー構成にできます。
+
+シェイプデータとFK構築処理を分離することで、シェイプライブラリを追加・変更しやすい構造にしています。
+
+---
+
+### 末端ジョイントの生成設定
+
+ジョイントチェーンの末端ジョイントにコントローラーを生成するかどうかを選択できます。
 
 ```text
-Create
+作成する場合
 
-Joint
-└─ Joint
-   └─ End Joint
-      └─ Controller
+ジョイント
+└─ ジョイント
+   └─ 末端ジョイント
+      └─ コントローラー
 
 
-Exclude
+除外する場合
 
-Joint
-└─ Joint
-   └─ End Joint
+ジョイント
+└─ ジョイント
+   └─ 末端ジョイント
 ```
 
-末端Jointまで直接操作したい場合は作成し、末端Jointを構造上の終端としてのみ使用する場合は除外できます。
+末端ジョイントまで直接操作したい場合は作成し、末端ジョイントを構造上の終端としてのみ使用する場合は除外できます。
 
-Rigの用途によって必要なController構成が異なるため、固定仕様にせず選択可能にしています。
+リグの用途によって必要なコントローラー構成が異なるため、固定仕様にせず選択可能にしています。
 
 ---
 
-### ZERO Group Option
+### ZERO Groupの生成設定
 
-Controller生成時に、各ControllerへZERO Groupを作成するかどうかを選択できます。
+コントローラー生成時に、各コントローラーへZERO Groupを作成するかどうかを選択できます。
 
 ```text
-Create
+作成する場合
 
 Controller_ZERO
 └─ Controller
 
 
-Exclude
+除外する場合
 
 Controller
 ```
 
-ZERO Groupを使用する場合は、Controllerの初期Transformを保持したままOffset階層として利用できます。
+ZERO Groupを使用する場合は、コントローラーの初期Transformを保持したままOffset階層として利用できます。
 
-一方で、既存Rigへ追加する場合や、必要以上にHierarchyを増やしたくない場合にはZERO Groupを除外できます。
+一方で、既存リグへ追加する場合や、必要以上に階層を増やしたくない場合にはZERO Groupを除外できます。
 
-特定のRig構造をツール側から強制するのではなく、**用途や既存Hierarchyに合わせて出力構造を選択できること**を重視しています。
+特定のリグ構造をツール側から強制するのではなく、**用途や既存階層に合わせて出力構造を選択できること**を重視しています。
 
 ---
 
-### Visibility Control
+### 表示切替管理
 
-任意のControllerを表示切替Controllerとして指定できます。
+任意のコントローラーを表示切替用コントローラーとして指定できます。
 
-指定したControllerへVisibility Attributeを追加し、生成したFK Controller群の表示をまとめて管理します。
+指定したコントローラーへVisibility Attributeを追加し、生成したFKコントローラー群の表示・非表示をまとめて管理します。
 
 Attribute名もUIから設定できるため、
 
@@ -192,81 +218,83 @@ Settings_CTRL
 └─ FK-finger
 ```
 
-のようにRigの用途に合わせた表示管理ができます。
+のように、リグの用途に合わせた表示管理ができます。
 
-Visibility管理をFK Controllerごとに設定する必要がなく、Rig全体の操作を一か所へ集約できます。
+FKコントローラーごとに表示設定を行う必要がなく、リグ全体の操作を一か所へ集約できます。
 
 ---
 
-## Workflow
+## 使用手順
 
-基本的なFK Rigの構築は、以下の流れで行います。
+基本的なFKリグの構築は、以下の流れで行います。
 
-1. FK化したい階層の**Root Joint**を選択
-2. `設定`からRoot Jointを登録
-3. 必要に応じて表示切替Controllerを設定
-4. Controller Sizeを調整
-5. Position / Rotationを設定
+1. FK化したい階層の**ルートジョイント**を選択
+2. `設定`からルートジョイントを登録
+3. 必要に応じて表示切替用コントローラーを設定
+4. コントローラーサイズを調整
+5. 位置 / 回転を設定
 6. Channel Lockを設定
-7. Controller Colorを設定
-8. Controller Shapeを選択
-9. 末端Jointを**作成 / 除外**から選択
+7. コントローラーカラーを設定
+8. コントローラーシェイプを選択
+9. 末端ジョイントを**作成 / 除外**から選択
 10. ZERO Groupを**作成 / 除外**から選択
 11. `FKを作成`を実行
-12. LogからBuild結果を確認
+12. Logから構築結果を確認
 
 ```text
-Select Root Joint
-       ↓
-Configure Controller
-       ↓
-Configure Hierarchy
-       ↓
-Build FK
-       ↓
-Validate
-       ↓
-Ready to Animate
+ルートジョイントを選択
+          ↓
+コントローラー設定
+          ↓
+出力構造を設定
+          ↓
+FKを作成
+          ↓
+自動検証
+          ↓
+アニメーション作業へ
 ```
 
-JointごとにControllerを作成して設定するのではなく、**Build前に必要な情報をまとめて指定し、一度のBuildでFK Rigを完成させる**ワークフローにしています。
+ジョイントごとにコントローラーを作成して設定するのではなく、**構築前に必要な情報をまとめて指定し、一度の実行でFKリグを完成させる**ワークフローにしています。
+
+### 一連の操作
 
 ---
 
-## Design
+## 設計方針
 
-### Fast Rig Construction
+### FKリグ構築の効率化
 
 FKリグの構築では、高度な処理だけでなく「同じ操作を何度も繰り返すこと」も大きな作業負担になります。
 
-Controller作成、位置合わせ、階層化、Constraint、Color、Channel Lockなどの定型作業をまとめて自動化することで、リガーがControllerの操作性やRig全体の設計など、より重要な調整へ時間を使えることを目指しています。
+コントローラー作成、位置合わせ、階層化、コンストレイント設定、カラー、Channel Lockなどの定型作業をまとめて自動化することで、リガーがコントローラーの操作性やリグ全体の設計など、より重要な調整へ時間を使えることを目指しています。
 
 ---
 
-### Animator Friendly
+### アニメーターが扱いやすい構成
 
-自動生成されたControllerをそのままアニメーション作業へ使用しやすい状態にすることを意識しています。
+自動生成されたコントローラーを、そのままアニメーション作業へ使用しやすい状態にすることを意識しています。
 
-* 不要ChannelのLock
-* Controller Colorによる視認性向上
-* 用途に応じたController Shape
-* Visibilityの一括管理
-* 予測しやすいFK Hierarchy
+- 不要ChannelのLock
+- コントローラーカラーによる視認性向上
+- 用途に応じたコントローラーシェイプ
+- Visibilityの一括管理
+- 予測しやすいFK階層
 
-など、Rigを「構築できること」だけでなく、**構築後に扱いやすいこと**も設計対象としています。
+など、リグを「構築できること」だけでなく、**構築後に扱いやすいこと**も設計対象としています。
 
 ---
 
-### Flexible Output Structure
+### 柔軟な出力構造
 
-Rigの構造は制作環境や用途によって異なるため、生成するHierarchyをひとつの形式へ固定していません。
+リグの構造は制作環境や用途によって異なるため、生成する階層をひとつの形式へ固定していません。
 
-末端JointのController生成やZERO Groupの有無を選択可能にすることで、
+末端ジョイントへのコントローラー生成やZERO Groupの有無を選択可能にすることで、
 
-* 新規Rigの構築
-* 既存Rigへの追加
-* シンプルなFK Chain
-* Offset階層を必要とするRig
+- 新規リグの構築
+- 既存リグへの追加
+- シンプルなFKチェーン
+- Offset階層を必要とするリグ
 
 など、それぞれのワークフローに合わせた出力ができます。
 
@@ -274,34 +302,34 @@ Rigの構造は制作環境や用途によって異なるため、生成するHi
 
 ---
 
-### Predictable Structure
+### 構造を追いやすい設計
 
-自動化によってRig内部をブラックボックス化しないことも重視しています。
+自動化によってリグ内部をブラックボックス化しないことも重視しています。
 
-Joint階層を基準としてController階層を構築し、生成されるController / ZERO Group / Constraintの関係を追いやすい構造にしています。
+ジョイント階層を基準としてコントローラー階層を構築し、生成されるコントローラー / ZERO Group / コンストレイントの関係を追いやすい構造にしています。
 
-Build後に手作業で調整したい場合でも、どのNodeが何のために存在しているのか把握しやすい状態を目指しています。
+構築後に手作業で調整したい場合でも、どのノードが何のために存在しているのか把握しやすい状態を目指しています。
 
 ---
 
-### Reusability
+### 再利用性
 
-特定のキャラクター専用の処理としてではなく、Root Jointを起点として異なるJoint Chainへ使用できる構造にしています。
+特定のキャラクター専用の処理としてではなく、ルートジョイントを起点として異なるジョイントチェーンへ使用できる構造にしています。
 
 キャラクターごとに同じFK構築スクリプトを書き直すのではなく、設定を変更することで同じBuilderを再利用できることを重視しています。
 
 ---
 
-## Architecture
+## 内部構成
 
-処理をUIへ集中させず、責務ごとにモジュールを分離しています。
+処理をUIへ集中させず、役割ごとにモジュールを分離しています。
 
 ```text
                   FK Builder
                       │
               ┌───────┴───────┐
               │               │
-              UI          Build Settings
+              UI            構築設定
               │               │
               └───────┬───────┘
                       ▼
@@ -309,95 +337,95 @@ Build後に手作業で調整したい場合でも、どのNodeが何のため�
                       │
           ┌───────────┼───────────┐
           │           │           │
-      Hierarchy   Controller   Shape Data
+        階層解析  コントローラー  シェイプデータ
           │           │           │
           └───────────┼───────────┘
                       ▼
-                  Maya Scene
+                  Mayaシーン
 ```
 
 ### UI
 
 ユーザーから、
 
-* Root Joint
-* Visibility
-* Controller Size
-* Position / Rotation
-* Channel Lock
-* Color
-* Shape
-* End Joint
-* ZERO Group
+- ルートジョイント
+- Visibility
+- コントローラーサイズ
+- 位置 / 回転
+- Channel Lock
+- カラー
+- シェイプ
+- 末端ジョイント
+- ZERO Group
 
-などのBuild設定を受け取ります。
+などの構築設定を受け取ります。
 
 ### Builder
 
-ValidationからController生成、Hierarchy構築、Constraint、最終確認まで、FK Build全体を管理します。
+事前検証からコントローラー生成、階層構築、コンストレイント設定、最終確認まで、FKリグ構築全体を管理します。
 
-### Hierarchy
+### 階層解析
 
-Root Joint以下のJoint構造を解析し、親子関係に対応したFK Controller Hierarchyを構築します。
+ルートジョイント以下のジョイント構造を解析し、親子関係に対応したFKコントローラー階層を構築します。
 
-### Controller
+### コントローラー
 
-NURBS Curve Controllerの生成やShape処理、Transform関連の処理を担当します。
+NURBS Curve Controllerの生成やシェイプ処理、Transform関連の処理を担当します。
 
-### Shape Data
+### シェイプデータ
 
-Controller Shapeの定義をBuild Logicから分離し、Shapeの追加・変更を行いやすくしています。
+コントローラーシェイプの定義をFK構築処理から分離し、シェイプの追加・変更を行いやすくしています。
 
 ---
 
-## Validation / Safety
+## 事前検証 / 安全性
 
-FK Builderでは既存のJoint階層へ処理を行うため、Sceneを不用意に変更しないことを重視しています。
+FK Builderでは既存のジョイント階層へ処理を行うため、シーンを不用意に変更しないことを重視しています。
 
-Build前に必要な情報を確認し、問題がある場合は処理を開始しません。
+構築前に必要な情報を確認し、問題がある場合は処理を開始しません。
 
 主な確認対象は、
 
-* Root Joint
-* Joint Hierarchy
-* Controller Name
-* Existing Node
-* Shape Data
-* Visibility Controller
-* Visibility Attribute
-* Build Settings
+- ルートジョイント
+- ジョイント階層
+- コントローラー名
+- 既存ノード
+- シェイプデータ
+- Visibility用コントローラー
+- Visibility Attribute
+- 構築設定
 
 などです。
 
-また、Build処理をひとつのUndo単位として扱い、途中でエラーが発生した場合にSceneへ不完全なRigが残ることをできるだけ防ぎます。
+また、構築処理をひとつのUndo単位として扱い、途中でエラーが発生した場合にシーンへ不完全なリグが残ることをできるだけ防ぎます。
 
-自動化による速度だけでなく、**既存Sceneに対して安心して実行できること**を重要な要件としています。
+自動化による速度だけでなく、**既存シーンに対して安心して実行できること**を重要な要件としています。
 
 ---
 
-## Testing
+## テスト
 
-Mayaに依存しない処理については、可能な範囲でMaya Scene Operationから分離してTestできる構造にしています。
+Mayaに依存しない処理については、可能な範囲でMayaのシーン操作から分離し、テストできる構造にしています。
 
-主なTest対象は、
+主なテスト対象は、
 
-* Naming
-* Selection Validation
-* Joint Hierarchy
-* Controller Settings
-* Shape Data
-* Color Resolution
-* Visibility Attribute
-* Branch Processing
+- 命名処理
+- 選択状態の検証
+- ジョイント階層
+- コントローラー設定
+- シェイプデータ
+- カラー設定
+- Visibility Attribute
+- 分岐処理
 
 などです。
 
-GitHub Actionsでは、Push / Pull Request時に自動Testを実行します。
+GitHub Actionsでは、Push / Pull Request時に自動テストを実行します。
 
 ```text
 Push / Pull Request
         ↓
-Compile Check
+構文チェック
         ↓
 Unit Tests
         ↓
@@ -410,47 +438,49 @@ Result
 
 ---
 
-## Technical Details
+## 技術情報
 
-* Autodesk Maya 2026（開発・動作確認環境）
-* Python 3
-* maya.cmds
-* PySide6
-* shiboken6
-* JSON
-* unittest
-* GitHub Actions
+- Autodesk Maya 2026
+- Python 3
+- maya.cmds
+- PySide6
+- shiboken6
+- JSON
+- unittest
+- GitHub Actions
 
-### Technical Focus
+### 技術的なポイント
 
-* Joint Hierarchyの自動解析
-* Joint構造に対応したFK Hierarchy生成
-* Controller Shape Dataの分離
-* Controller Position / Rotation調整
-* End Jointの選択的生成
-* ZERO Groupの選択的生成
-* Visibility Attributeの自動構築
-* Channel Lockの自動設定
-* Build前Validation
-* Undo / Rollbackを考慮したScene操作
+- ジョイント階層の自動解析
+- ジョイント構造に対応したFK階層生成
+- コントローラーシェイプデータの分離
+- コントローラー位置 / 回転調整
+- 末端ジョイントへの選択的なコントローラー生成
+- ZERO Groupの選択的生成
+- Visibility Attributeの自動構築
+- Channel Lockの自動設定
+- 構築前の検証
+- Undo / Rollbackを考慮したシーン操作
 
 ---
 
-## Requirements
+## 動作環境
 
-* Autodesk Maya 2026（動作確認済み）
-* Python 3
-* PySide6 / shiboken6
+- Autodesk Maya 2026（動作確認済み）
+- Python 3
+- PySide6 / shiboken6
 
-現在はMaya 2026で開発・動作確認を行っています。その他のMaya VersionおよびOS環境については未検証です。
+現在はMaya 2026で開発・動作確認を行っています。
+
+その他のMayaバージョンおよびOS環境については未検証です。
 
 PySide6 / shiboken6はMaya 2026に同梱されているものを使用します。
 
-外部Python Packageは必要ありません。
+外部Pythonパッケージは必要ありません。
 
 ---
 
-## Installation
+## インストール
 
 リポジトリをMayaからアクセス可能な場所へCloneまたはDownloadします。
 
@@ -476,7 +506,7 @@ runpy.run_path(str(tool_root / "launch_fk_builder.py"))
 
 ---
 
-## Project Structure
+## プロジェクト構成
 
 ```text
 FK-Builder/
@@ -497,7 +527,8 @@ FK-Builder/
 ├─ tests/
 │
 ├─ docs/
-│  └─ media/
+│  ├─ images/
+│  └─ gifs/
 │
 ├─ .github/
 │  └─ workflows/
@@ -506,74 +537,74 @@ FK-Builder/
 └─ README.md
 ```
 
-各モジュールの責務を分離することで、UI変更、Controller生成処理、Hierarchy解析、Shape追加などの変更が互いに影響しにくい構造を意識しています。
+各モジュールの役割を分離することで、UI変更、コントローラー生成処理、階層解析、シェイプ追加などの変更が互いに影響しにくい構造を意識しています。
 
 ---
 
-## Current Scope / Limitations
+## 現在の対応範囲
 
-現在のFK Builderは、**Joint階層からFK Controller Rigを構築すること**に機能を絞っています。
+現在のFK Builderは、**ジョイント階層からFKコントローラーリグを構築すること**に機能を絞っています。
 
-### Supported
+### 対応している機能
 
-* Root Joint以下のFK Rig生成
-* Joint Hierarchyの自動解析
-* Branchを含むJoint階層
-* Controller Position / Rotation設定
-* Channel Lock
-* Controller Color
-* Controller Shape
-* End Joint Create / Exclude
-* ZERO Group Create / Exclude
-* Visibility Attribute
-* FK Controller Hierarchy生成
+- ルートジョイント以下のFKリグ生成
+- ジョイント階層の自動解析
+- 分岐を含むジョイント階層
+- コントローラー位置 / 回転設定
+- Channel Lock
+- コントローラーカラー
+- コントローラーシェイプ
+- 末端ジョイントの作成 / 除外
+- ZERO Groupの作成 / 除外
+- Visibility Attribute
+- FKコントローラー階層生成
 
-### Current Scope
+### 現在の対象外
 
-* IK Rigの自動構築は対象外
-* FK / IK Switchの生成は対象外
-* Skinning / Weight処理は対象外
-* Maya 2026を基準に開発・検証
+- IKリグの自動構築
+- FK / IK Switchの生成
+- Skinning / Weight処理
+- Maya 2026以外の環境での動作保証
 
-FK Builder単体ですべてのRigを自動生成するのではなく、**FK Controller Rigを素早く、一貫性のある構造で構築すること**を現在の役割としています。
+FK Builder単体ですべてのリグを自動生成するのではなく、**FKコントローラーリグを素早く、一貫性のある構造で構築すること**を現在の役割としています。
 
 ---
 
-## Background
+## 制作背景
 
-FK Rigを制作する中で、Controller作成そのものより、
+FKリグを制作する中で、コントローラー作成そのものより、
 
-* Jointへの位置合わせ
-* Controller Shapeの調整
-* ZERO Group作成
-* Naming
-* Controller階層化
-* Constraint
-* Color設定
-* Channel Lock
-* Visibility設定
+- ジョイントへの位置合わせ
+- コントローラーシェイプの調整
+- ZERO Group作成
+- 命名
+- コントローラーの階層化
+- コンストレイント設定
+- カラー設定
+- Channel Lock
+- Visibility設定
 
-といった定型作業を何度も繰り返すことに制作時間を取られることが課題でした。
+といった定型作業を何度も繰り返すことに、制作時間を取られることが課題でした。
 
 ```text
-Production Problem
-       ↓
-Repeated FK Setup
-       ↓
-Prototype Automation
-       ↓
-Controller Customization
-       ↓
-Hierarchy Options
-       ↓
-Validation
-       ↓
-Reusable FK Builder
+制作上の課題
+      ↓
+FKセットアップの反復
+      ↓
+自動化を試作
+      ↓
+コントローラー調整機能
+      ↓
+階層構造の選択
+      ↓
+事前検証
+      ↓
+再利用可能なFK Builder
 ```
 
-そこで、単純なController自動生成スクリプトではなく、**見た目・操作性・Hierarchy・安全性まで含めてFK Rig構築をひとつのワークフローとして扱えるツール**として開発しました。
+そこで、単純なコントローラー自動生成スクリプトではなく、**見た目・操作性・階層構造・安全性まで含めて、FKリグ構築をひとつのワークフローとして扱えるツール**として開発しました。
 
-また、自動化する範囲を固定するのではなく、末端JointやZERO Groupの生成を選択できるようにすることで、異なるRig構造や制作方針にも対応できる設計にしています。
+また、自動化する範囲を固定するのではなく、末端ジョイントやZERO Groupの生成を選択できるようにすることで、異なるリグ構造や制作方針にも対応できる設計にしています。
 
 手作業をすべて置き換えることではなく、**繰り返し作業を自動化しながら、リガーが必要な構造を選択できること**を目指しています。
 

@@ -154,5 +154,60 @@ class BuilderConfigurationTests(unittest.TestCase):
         )
 
 
+class ScaleConstraintCmds:
+    def __init__(self, locked=(), connected=()):
+        self.locked = set(locked)
+        self.connected = set(connected)
+        self.lock_changes = []
+        self.constraint_kwargs = None
+
+    def connectionInfo(self, plug, isDestination=False):
+        return isDestination and plug in self.connected
+
+    def getAttr(self, plug, lock=False):
+        return lock and plug in self.locked
+
+    def setAttr(self, plug, lock=False):
+        self.lock_changes.append((plug, lock))
+        if lock:
+            self.locked.add(plug)
+        else:
+            self.locked.discard(plug)
+
+    def scaleConstraint(self, controller, joint, **kwargs):
+        self.constraint_kwargs = kwargs
+        return [kwargs["name"]]
+
+
+class ScaleConstraintTests(unittest.TestCase):
+    def test_locked_scale_is_restored_after_constraint_creation(self):
+        cmds = ScaleConstraintCmds(locked={"joint.scaleX"})
+        result = FKBuilder(cmds=cmds)._create_scale_constraint(
+            "control", "joint", "control_scaleConstraint"
+        )
+        self.assertEqual(result, "control_scaleConstraint")
+        self.assertEqual(
+            cmds.lock_changes,
+            [("joint.scaleX", False), ("joint.scaleX", True)],
+        )
+
+    def test_existing_scale_input_is_preserved_and_skipped(self):
+        cmds = ScaleConstraintCmds(connected={"joint.scaleX"})
+        FKBuilder(cmds=cmds)._create_scale_constraint(
+            "control", "joint", "control_scaleConstraint"
+        )
+        self.assertEqual(cmds.constraint_kwargs["skip"], ["x"])
+
+    def test_constraint_is_omitted_when_all_scale_axes_are_connected(self):
+        cmds = ScaleConstraintCmds(
+            connected={"joint.scaleX", "joint.scaleY", "joint.scaleZ"}
+        )
+        result = FKBuilder(cmds=cmds)._create_scale_constraint(
+            "control", "joint", "control_scaleConstraint"
+        )
+        self.assertIsNone(result)
+        self.assertIsNone(cmds.constraint_kwargs)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -26,15 +26,13 @@ def short_name(node: str) -> str:
 
 
 def controller_name(joint: str) -> str:
-    """Convert a supported joint suffix to the controller suffix."""
+    """Return a controller name without requiring a joint naming convention."""
     name = short_name(joint)
     lower_name = name.lower()
     for suffix in ("_joint", "_bind", "_bone", "_jnt", "_skn", "_bn"):
         if lower_name.endswith(suffix):
             return name[:-len(suffix)] + "_anim"
-    raise FKBuilderError(
-        "Joint name must use a supported joint suffix: {0}".format(name)
-    )
+    return name + "_anim"
 
 
 def zero_name(joint: str) -> str:
